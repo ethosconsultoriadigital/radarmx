@@ -153,7 +153,6 @@ export default async function PostPage({ params }: GenerateMetadataCtx) {
 
   const manualList = relatedBlock?.manual ?? []
 
-  // Resolvemos posts relacionados; filtramos nulos
   const relatedDocs = (
     await Promise.all(
       manualList.map(async (pp) => {
