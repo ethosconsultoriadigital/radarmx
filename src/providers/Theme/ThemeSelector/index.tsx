@@ -7,31 +7,48 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 
 import type { Theme } from './types'
-
 import { useTheme } from '..'
 import { themeLocalStorageKey } from './types'
 
+type ThemeOption = Theme | 'auto'
+
 export const ThemeSelector: React.FC = () => {
   const { setTheme } = useTheme()
-  const [value, setValue] = useState('')
+  const [value, setValue] = useState<ThemeOption>('light') // default light
 
-  const onThemeChange = (themeToSet: Theme & 'auto') => {
+  const onThemeChange = (themeToSet: ThemeOption) => {
     if (themeToSet === 'auto') {
       setTheme(null)
-      setValue('auto')
     } else {
       setTheme(themeToSet)
-      setValue(themeToSet)
+    }
+    setValue(themeToSet)
+
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(themeLocalStorageKey, themeToSet)
     }
   }
 
-  React.useEffect(() => {
-    const preference = window.localStorage.getItem(themeLocalStorageKey)
-    setValue(preference ?? 'auto')
-  }, [])
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const preference = window.localStorage.getItem(themeLocalStorageKey) as ThemeOption | null
+
+    if (preference === 'auto') {
+      setTheme(null)
+      setValue('auto')
+    } else if (preference === 'light' || preference === 'dark') {
+      setTheme(preference)
+      setValue(preference)
+    } else {
+      // No había preferencia guardada: fijamos y persistimos "light"
+      setTheme('light')
+      setValue('light')
+      window.localStorage.setItem(themeLocalStorageKey, 'light')
+    }
+  }, [setTheme])
 
   return (
     <Select onValueChange={onThemeChange} value={value}>
