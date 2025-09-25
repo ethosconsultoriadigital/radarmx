@@ -124,7 +124,7 @@ export default function CategoryBlockComponent(props: Props) {
 
   const catSlug = catMeta?.slug
   const sectionTitle = catMeta?.title || 'Categoría'
-  const leftHref = catSlug ? `/${catSlug}/${leftPost.slug}` : `/posts/${leftPost.slug}`
+  const leftHref = `/posts/${leftPost.slug}`
   const leftThumb = extractThumbFromBlocks(leftPost) || '/placeholder.jpg'
 
   return (
