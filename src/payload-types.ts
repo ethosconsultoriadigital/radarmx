@@ -103,10 +103,12 @@ export interface Config {
   globals: {
     header: Header;
     footer: Footer;
+    'home-highlights': HomeHighlight;
   };
   globalsSelect: {
     header: HeaderSelect<false> | HeaderSelect<true>;
     footer: FooterSelect<false> | FooterSelect<true>;
+    'home-highlights': HomeHighlightsSelect<false> | HomeHighlightsSelect<true>;
   };
   locale: null;
   user: User & {
@@ -148,78 +150,115 @@ export interface UserAuthOperations {
 export interface Page {
   id: number;
   title: string;
-  layout: {
-    asContainer?: boolean | null;
-    maxWidth?: ('lg' | 'xl' | '2xl' | '7xl' | 'full') | null;
-    background?: ('transparent' | 'white' | 'neutral-900' | 'zinc-50' | 'panel') | null;
-    paddingY?: ('' | 'py-6 md:py-8' | 'py-8 md:py-12' | 'py-12 md:py-16' | 'py-16 md:py-24') | null;
-    gap?: ('gap-0' | 'gap-3 md:gap-4' | 'gap-4 md:gap-6' | 'gap-6 md:gap-8' | 'gap-8 md:gap-12') | null;
-    alignY?: ('items-start' | 'items-center' | 'items-end' | 'items-stretch') | null;
-    alignX?: ('justify-start' | 'justify-center' | 'justify-end' | 'justify-between') | null;
-    /**
-     * Define cuántas columnas tiene la grilla
-     */
-    cols?: {
-      base?: number | null;
-      sm?: number | null;
-      md?: number | null;
-      lg?: number | null;
-      xl?: number | null;
-    };
-    cells?:
-      | {
-          blocks: (
-            | RichTextBlockT
-            | ArchiveBlock
-            | {
-                source: 'latest' | 'byCategory' | 'manual';
-                category?: (number | null) | Category;
-                posts?: (number | Post)[] | null;
-                /**
-                 * Usa 5 para layout (1 principal + 4 secundarios).
-                 */
-                limit?: number | null;
-                offset?: number | null;
-                showDates?: boolean | null;
-                locale?: ('es' | 'en' | 'pt') | null;
-                id?: string | null;
-                blockName?: string | null;
-                blockType: 'heroGrid';
-              }
-            | {
-                /**
-                 * Prefijo de las URLs de categoría, ej. /category o /posts/categoria
-                 */
-                basePath?: string | null;
-                source: 'all' | 'selected';
-                /**
-                 * Arrastra para ordenar. Se respetará este orden.
-                 */
-                selectedCategories?: (number | Category)[] | null;
-                maxCategories?: number | null;
-                id?: string | null;
-                blockName?: string | null;
-                blockType: 'categoryMenu';
-              }
-            | {
-                id?: string | null;
-                blockName?: string | null;
-                blockType: 'perspectiveEconomy';
-              }
-          )[];
-          vAlign?: ('self-stretch' | 'self-start' | 'self-center' | 'self-end') | null;
+  layout: (
+    | {
+        asContainer?: boolean | null;
+        maxWidth?: ('lg' | 'xl' | '2xl' | '7xl' | 'full') | null;
+        background?: ('transparent' | 'white' | 'neutral-900' | 'zinc-50' | 'panel') | null;
+        paddingY?: ('' | 'py-6 md:py-8' | 'py-8 md:py-12' | 'py-12 md:py-16' | 'py-16 md:py-24') | null;
+        gap?: ('gap-0' | 'gap-3 md:gap-4' | 'gap-4 md:gap-6' | 'gap-6 md:gap-8' | 'gap-8 md:gap-12') | null;
+        alignY?: ('items-start' | 'items-center' | 'items-end' | 'items-stretch') | null;
+        alignX?: ('justify-start' | 'justify-center' | 'justify-end' | 'justify-between') | null;
+        /**
+         * Define cuántas columnas tiene la grilla
+         */
+        cols?: {
           base?: number | null;
           sm?: number | null;
           md?: number | null;
           lg?: number | null;
           xl?: number | null;
-          id?: string | null;
-        }[]
-      | null;
-    id?: string | null;
-    blockName?: string | null;
-    blockType: 'row';
-  }[];
+        };
+        cells?:
+          | {
+              blocks: (
+                | RichTextBlockT
+                | ArchiveBlock
+                | {
+                    source: 'latest' | 'byCategory' | 'manual';
+                    category?: (number | null) | Category;
+                    posts?: (number | Post)[] | null;
+                    /**
+                     * Usa 5 para layout (1 principal + 4 secundarios).
+                     */
+                    limit?: number | null;
+                    offset?: number | null;
+                    showDates?: boolean | null;
+                    locale?: ('es' | 'en' | 'pt') | null;
+                    id?: string | null;
+                    blockName?: string | null;
+                    blockType: 'heroGrid';
+                  }
+                | {
+                    /**
+                     * Prefijo de las URLs de categoría, ej. /category o /posts/categoria
+                     */
+                    basePath?: string | null;
+                    source: 'all' | 'selected';
+                    /**
+                     * Arrastra para ordenar. Se respetará este orden.
+                     */
+                    selectedCategories?: (number | Category)[] | null;
+                    maxCategories?: number | null;
+                    id?: string | null;
+                    blockName?: string | null;
+                    blockType: 'categoryMenu';
+                  }
+                | {
+                    id?: string | null;
+                    blockName?: string | null;
+                    blockType: 'perspectiveEconomy';
+                  }
+              )[];
+              vAlign?: ('self-stretch' | 'self-start' | 'self-center' | 'self-end') | null;
+              base?: number | null;
+              sm?: number | null;
+              md?: number | null;
+              lg?: number | null;
+              xl?: number | null;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+        blockName?: string | null;
+        blockType: 'row';
+      }
+    | {
+        id?: string | null;
+        blockName?: string | null;
+        blockType: 'featureWithSidebar';
+      }
+    | {
+        /**
+         * Selecciona la categoría desde la cual se alimentará el bloque.
+         */
+        category: number | Category;
+        id?: string | null;
+        blockName?: string | null;
+        blockType: 'categoryBlock';
+      }
+    | {
+        /**
+         * Una o varias etiquetas. Deben coincidir con el campo "tags" del Post.
+         */
+        tags: string[];
+        matchMode?: ('any' | 'all') | null;
+        title?: string | null;
+        rightCount?: number | null;
+        id?: string | null;
+        blockName?: string | null;
+        blockType: 'tagsBlock';
+      }
+    | {
+        /**
+         * Etiqueta para filtrar los posts. Debe coincidir con el campo "tags" de la colección Posts.
+         */
+        tag: string;
+        id?: string | null;
+        blockName?: string | null;
+        blockType: 'singleTagBlock';
+      }
+  )[];
   meta?: {
     title?: string | null;
     /**
@@ -1138,6 +1177,36 @@ export interface PagesSelect<T extends boolean = true> {
               id?: T;
               blockName?: T;
             };
+        featureWithSidebar?:
+          | T
+          | {
+              id?: T;
+              blockName?: T;
+            };
+        categoryBlock?:
+          | T
+          | {
+              category?: T;
+              id?: T;
+              blockName?: T;
+            };
+        tagsBlock?:
+          | T
+          | {
+              tags?: T;
+              matchMode?: T;
+              title?: T;
+              rightCount?: T;
+              id?: T;
+              blockName?: T;
+            };
+        singleTagBlock?:
+          | T
+          | {
+              tag?: T;
+              id?: T;
+              blockName?: T;
+            };
       };
   meta?:
     | T
@@ -1813,6 +1882,38 @@ export interface Footer {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "home-highlights".
+ */
+export interface HomeHighlight {
+  id: number;
+  title?: string | null;
+  /**
+   * Fondo opcional difuminado
+   */
+  background?: (number | null) | Media;
+  /**
+   * Define exactamente 4 columnas
+   */
+  columns?:
+    | {
+        mode: 'latestByCategory' | 'manualPost';
+        category?: (number | null) | Category;
+        /**
+         * Elige el post a fijar en esta columna
+         */
+        post?: (number | null) | Post;
+        /**
+         * Si lo dejas vacío, se usará la fecha publicada del post (publishedAt)
+         */
+        dateOverride?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header_select".
  */
 export interface HeaderSelect<T extends boolean = true> {
@@ -1851,6 +1952,26 @@ export interface FooterSelect<T extends boolean = true> {
               url?: T;
               label?: T;
             };
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "home-highlights_select".
+ */
+export interface HomeHighlightsSelect<T extends boolean = true> {
+  title?: T;
+  background?: T;
+  columns?:
+    | T
+    | {
+        mode?: T;
+        category?: T;
+        post?: T;
+        dateOverride?: T;
         id?: T;
       };
   updatedAt?: T;

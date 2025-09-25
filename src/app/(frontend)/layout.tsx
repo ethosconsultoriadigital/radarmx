@@ -15,6 +15,7 @@ import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 
 import './globals.css'
 import { getServerSideURL } from '@/utilities/getURL'
+import HomeHighlights from '@/HomeHighlights/Component'
 
 const frank = Frank_Ruhl_Libre({
   subsets: ['latin'],
@@ -35,6 +36,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body>
         <Providers>
           <Header />
+          <HomeHighlights />
           {children}
           <Footer />
         </Providers>

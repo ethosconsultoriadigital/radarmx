@@ -22,6 +22,10 @@ import {
 import { Row } from '@/blocks/Row/config'
 import { HeroGrid } from '@/blocks/HeroGrid/config'
 import { PerspectiveEconomyChart } from '@/blocks/PerspectiveEconomyChart/config'
+import { featureWithSidebar } from '@/blocks/FeatureWithSidebar/config'
+import { categoryBlock } from '@/blocks/CategoryBlock/config'
+import { tagsBlock } from '@/blocks/TagsBlock/config'
+import { singleTagBlock } from '@/blocks/SingleTagBlock/config'
 
 export const Pages: CollectionConfig<'pages'> = {
   slug: 'pages',
@@ -73,7 +77,7 @@ export const Pages: CollectionConfig<'pages'> = {
             {
               name: 'layout',
               type: 'blocks',
-              blocks: [Row],
+              blocks: [Row, featureWithSidebar, categoryBlock, tagsBlock, singleTagBlock],
               required: true,
               admin: {
                 initCollapsed: true,

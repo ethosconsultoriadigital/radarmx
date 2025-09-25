@@ -12,6 +12,10 @@ import HeroGrid from './HeroGrid/Component'
 import CategoryMenu from './CategoryMenu/Component'
 import PerspectiveEconomyChart from './PerspectiveEconomyChart/Component'
 import RichText from '@/components/RichText'
+import FeatureWithSidebarComponent from './FeatureWithSidebar/Component'
+import CategoryBlockComponent from './CategoryBlock/Component'
+import TagsBlockComponent from './TagsBlock/Component'
+import SingleTagBlockComponent from './SingleTagBlock/Component'
 
 const blockComponents = {
   archive: ArchiveBlock,
@@ -24,6 +28,10 @@ const blockComponents = {
   categoryMenu: CategoryMenu,
   perspectiveEconomy: PerspectiveEconomyChart,
   richText: RichText,
+  featureWithSidebar: FeatureWithSidebarComponent,
+  categoryBlock: CategoryBlockComponent,
+  tagsBlock: TagsBlockComponent,
+  singleTagBlock: SingleTagBlockComponent,
 }
 
 export const RenderBlocks: React.FC<{
