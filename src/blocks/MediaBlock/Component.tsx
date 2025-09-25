@@ -1,14 +1,23 @@
-import type { StaticImageData } from 'next/image'
-
-import { cn } from '@/utilities/ui'
+// components/blocks/MediaBlock.tsx
 import React from 'react'
+import type { StaticImageData } from 'next/image'
+import { cn } from '@/utilities/ui'
 import RichText from '@/components/RichText'
 
-import type { MediaBlock as MediaBlockProps } from '@/payload-types'
+// Importa el documento Media desde los tipos generados
+import type { Media as MediaDoc } from '@/payload-types'
 
-import { Media } from '../../components/Media'
+// Renombramos el componente "Media" para no chocar con el tipo "MediaDoc"
+import { Media as MediaComponent } from '../../components/Media'
 
-type Props = MediaBlockProps & {
+type RichTextData = React.ComponentProps<typeof RichText>['data']
+
+// Tipo mínimo del bloque que necesitas aquí
+type MediaBlockFields = {
+  media?: number | MediaDoc | null
+}
+
+type Props = MediaBlockFields & {
   breakout?: boolean
   captionClassName?: string
   className?: string
@@ -16,6 +25,10 @@ type Props = MediaBlockProps & {
   imgClassName?: string
   staticImage?: StaticImageData
   disableInnerContainer?: boolean
+}
+
+function hasCaption(m: unknown): m is MediaDoc & { caption?: RichTextData } {
+  return typeof m === 'object' && m !== null && 'caption' in (m as any)
 }
 
 export const MediaBlock: React.FC<Props> = (props) => {
@@ -29,8 +42,7 @@ export const MediaBlock: React.FC<Props> = (props) => {
     disableInnerContainer,
   } = props
 
-  let caption
-  if (media && typeof media === 'object') caption = media.caption
+  const caption: RichTextData | undefined = hasCaption(media) ? (media.caption as any) : undefined
 
   return (
     <div
@@ -43,12 +55,13 @@ export const MediaBlock: React.FC<Props> = (props) => {
       )}
     >
       {(media || staticImage) && (
-        <Media
+        <MediaComponent
           imgClassName={cn('border border-border rounded-[0.8rem]', imgClassName)}
           resource={media}
           src={staticImage}
         />
       )}
+
       {caption && (
         <div
           className={cn(

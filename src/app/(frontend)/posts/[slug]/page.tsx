@@ -96,8 +96,6 @@ export async function generateMetadata({ params }: GenerateMetadataCtx): Promise
       noarchive: advanced || undefined,
       nosnippet: advanced || undefined,
       noimageindex: advanced || undefined,
-      // Puedes ajustar googleBot si quieres granularidad:
-      // googleBot: { index: robotsIndex ? 'index' : 'noindex', follow: robotsFollow ? 'follow' : 'nofollow' },
     },
     openGraph: {
       type: og.ogType || 'article',
@@ -145,17 +143,28 @@ export default async function PostPage({ params }: GenerateMetadataCtx) {
       }
     : null
 
-  const relatedPosts = await Promise.all(
-    post.blocks
-      .find((r) => r.blockType == 'relatedPosts')
-      ?.manual?.map(async (pp) => {
+  // Protegemos blocks con fallback []
+  const blocks = post.blocks ?? []
+
+  // Bloque de relacionados (si existe)
+  const relatedBlock = blocks.find((b) => b.blockType === 'relatedPosts') as
+    | { manual?: unknown[] }
+    | undefined
+
+  const manualList = relatedBlock?.manual ?? []
+
+  // Resolvemos posts relacionados; filtramos nulos
+  const relatedDocs = (
+    await Promise.all(
+      manualList.map(async (pp) => {
         if (isObj(pp)) {
-          const post = await fetchPost((pp as Post).slug!, 1)
-          return post
+          const p = await fetchPost((pp as Post).slug!, 1)
+          return p
         }
         return null
-      }) || [],
-  )
+      }),
+    )
+  ).filter((p): p is Post => Boolean(p))
 
   return (
     <main className="container mx-auto px-4 pt-24">
@@ -169,12 +178,12 @@ export default async function PostPage({ params }: GenerateMetadataCtx) {
             {pubISO && <time itemProp="datePublished" dateTime={pubISO} />}
           </div>
 
-          <ContentBlocks blocks={post.blocks.filter((r) => r.blockType != 'relatedPosts')} />
+          <ContentBlocks blocks={blocks.filter((r) => r.blockType !== 'relatedPosts')} />
 
           <div className="mt-12 pb-12 border-t border-neutral-200 dark:border-neutral-800 pt-6 text-sm text-neutral-600 dark:text-neutral-400">
             {post.categories?.length ? (
               <p className="mt-2">
-                Categorías:{' '}
+                Categorías{' '}
                 {(post.categories as unknown as Category[]).map((c, i) => (
                   <span key={c.id}>
                     {i > 0 ? ', ' : ''}
@@ -188,10 +197,10 @@ export default async function PostPage({ params }: GenerateMetadataCtx) {
           </div>
         </article>
 
-        {relatedPosts && (
+        {relatedDocs.length > 0 && (
           <div className="w-full flex flex-col gap-4">
             <h4 className="text-lg">Noticias relacionadas</h4>
-            <RelatedPosts docs={relatedPosts as Post[]} />
+            <RelatedPosts docs={relatedDocs} />
           </div>
         )}
       </div>
@@ -200,7 +209,6 @@ export default async function PostPage({ params }: GenerateMetadataCtx) {
       {jsonld && (
         <script
           type="application/ld+json"
-          // eslint-disable-next-line react/no-danger
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonld) }}
         />
       )}

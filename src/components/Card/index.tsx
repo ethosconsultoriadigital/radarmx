@@ -9,7 +9,7 @@ import type { Post } from '@/payload-types'
 import { Media } from '@/components/Media'
 import { getPostImage } from '@/utilities/getPostImage'
 
-export type CardPostData = Pick<Post, 'slug' | 'title' | 'categories' | 'seo'>
+export type CardPostData = Pick<Post, 'id' | 'slug' | 'title' | 'categories' | 'seo'>
 
 export const Card: React.FC<{
   alignItems?: 'center'
