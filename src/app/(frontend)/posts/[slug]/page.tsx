@@ -143,7 +143,7 @@ export default async function PostPage({ params }: GenerateMetadataCtx) {
       }
     : null
 
-  // Protegemos blocks con fallback []
+  // Protegemos blocks con fallback
   const blocks = post.blocks ?? []
 
   // Bloque de relacionados (si existe)
