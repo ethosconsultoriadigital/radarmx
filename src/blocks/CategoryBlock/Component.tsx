@@ -134,7 +134,7 @@ export default function CategoryBlockComponent(props: Props) {
       </h2>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-        {/* Izquierda: última noticia de la categoría (2/3 en md+) */}
+        {/* Izquierda: última noticia de la categoría (2/3 en md) */}
         <div className="md:col-span-2">
           <Link href={leftHref} className="block no-underline">
             <div className="relative overflow-hidden rounded-xl bg-[#e9eef2]">
