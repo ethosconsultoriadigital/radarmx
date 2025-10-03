@@ -1,21 +1,19 @@
 import type { Metadata } from 'next'
-
+import React from 'react'
 import { Frank_Ruhl_Libre } from 'next/font/google'
-
-import { cn } from '@/utilities/ui'
 import { GeistMono } from 'geist/font/mono'
 import { GeistSans } from 'geist/font/sans'
-import React from 'react'
+import { cn } from '@/utilities/ui'
 
 import { Footer } from '@/Footer/Component'
 import { Header } from '@/Header/Component'
 import { Providers } from '@/providers'
 import { InitTheme } from '@/providers/Theme/InitTheme'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
-
-import './globals.css'
 import { getServerSideURL } from '@/utilities/getURL'
+
 import HomeHighlights from '@/HomeHighlights/Component'
+import './globals.css'
 
 const frank = Frank_Ruhl_Libre({
   subsets: ['latin'],
