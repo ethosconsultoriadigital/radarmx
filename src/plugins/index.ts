@@ -15,6 +15,8 @@ import { gcsStorage } from '@payloadcms/storage-gcs'
 import { Page, Post } from '@/payload-types'
 import { getServerSideURL } from '@/utilities/getURL'
 
+// deploy
+
 const generateTitle: GenerateTitle<Post | Page> = ({ doc }) => {
   return doc?.title ? `${doc.title} | Payload Website Template` : 'Payload Website Template'
 }
