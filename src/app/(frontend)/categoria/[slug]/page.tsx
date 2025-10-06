@@ -4,8 +4,7 @@ import { getPayloadHMR } from '@payloadcms/next/utilities'
 import config from '@payload-config'
 
 type PageProps = {
-  params: { slug: string }
-  searchParams?: { page?: string; limit?: string }
+  params: Promise<{ slug: string }>
 }
 
 function truncate(str: string, max = 120) {
@@ -47,12 +46,14 @@ function extractTextFromLexical(node: any): string {
   return out.trim()
 }
 
-export default async function CategoryPage({ params, searchParams }: PageProps) {
+export default async function CategoryPage({ params }: PageProps) {
   const payload = await getPayloadHMR({ config })
-  const { slug } = params
+  const { slug } = await params
 
-  const page = Math.max(parseInt(searchParams?.page || '1', 10) || 1, 1)
-  const limit = Math.min(Math.max(parseInt(searchParams?.limit || '12', 10) || 12, 1), 48)
+  const page = 1
+  const limit = 10
+  //const page = Math.max(parseInt(searchParams?.page || '1', 10) || 1, 1)
+  //const limit = Math.min(Math.max(parseInt(searchParams?.limit || '12', 10) || 12, 1), 48)
 
   const catRes = await payload.find({
     collection: 'categories',
@@ -77,7 +78,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
   const buildPageHref = (newPage: number) => {
     const sp = new URLSearchParams()
     if (newPage > 1) sp.set('page', String(newPage))
-    if (limit !== 12) sp.set('limit', String(limit))
+    sp.set('limit', String(limit))
     const qs = sp.toString()
     return `/categoria/${slug}${qs ? `?${qs}` : ''}`
   }
