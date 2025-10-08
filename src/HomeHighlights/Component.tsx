@@ -38,12 +38,11 @@ const API = process.env.NEXT_PUBLIC_SERVER_URL || ''
 function extractThumbFromBlocks(blocks?: any[]): string | undefined {
   if (!Array.isArray(blocks)) return undefined
   for (const b of blocks) {
-    if (!b) continue
-    const type = b.blockType
-    if (type === 'hero' && b?.media?.url) return b.media.url as string
-    if (type === 'image' && b?.image?.url) return b.image.url as string
-    if (type === 'gallery' && Array.isArray(b?.images) && b.images[0]?.image?.url)
-      return b.images[0].image.url as string
+    const t = b?.blockType
+    if (t === 'hero' && b?.image?.url) return b.image.url as string
+    /* if (t === 'image' && b?.image?.url) return b.image.url as string
+    if (t === 'gallery' && Array.isArray(b?.images) && b.images[0]?.image?.url) */
+    return b.images[0].image.url as string
   }
   return undefined
 }
