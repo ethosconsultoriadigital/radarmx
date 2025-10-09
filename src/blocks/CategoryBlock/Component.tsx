@@ -122,85 +122,85 @@ export default function CategoryBlockComponent(props: Props) {
 
   if (loading || !catId || !leftPost) return null
 
-  const catSlug = catMeta?.slug
   const sectionTitle = catMeta?.title || 'Categoría'
   const leftHref = `/posts/${leftPost.slug}`
   const leftThumb = extractThumbFromBlocks(leftPost) || '/placeholder.jpg'
 
   return (
     <section className="px-4 md:px-[20%] mt-14">
-      <h2 className="mb-4 text-[clamp(24px,3vw,40px)] font-extrabold text-[#0e1f28]  border-b-2 w-fit border-red-600">
-        {sectionTitle}
-      </h2>
+      <div className="mx-auto max-w-[1220px]">
+        <h2 className="mb-4 text-[clamp(24px,3vw,40px)] font-extrabold text-[#0e1f28]  border-b-2 w-fit border-red-600">
+          {sectionTitle}
+        </h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-        {/* Izquierda: última noticia de la categoría (2/3 en mdf) */}
-        <div className="md:col-span-2">
-          <Link href={leftHref} className="block no-underline">
-            <div className="relative overflow-hidden rounded-xl bg-[#e9eef2]">
-              <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={leftThumb}
-                  alt={leftPost.title}
-                  className="absolute inset-0 h-full w-full object-cover"
-                />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+          {/* Izquierda */}
+          <div className="md:col-span-2">
+            <Link href={leftHref} className="block no-underline">
+              <div className="relative overflow-hidden rounded-xl bg-[#e9eef2]">
+                <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
+                  <img
+                    src={leftThumb}
+                    alt={leftPost.title}
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                </div>
               </div>
-            </div>
 
-            <h3 className="mt-4 font-extrabold leading-[1.02] text-[clamp(22px,2.6vw,36px)] text-[#0e1f28]">
-              {leftPost.title}
-            </h3>
-          </Link>
-        </div>
+              <h3 className="mt-4 font-extrabold leading-[1.02] text-[clamp(22px,2.6vw,36px)] text-[#0e1f28]">
+                {leftPost.title}
+              </h3>
+            </Link>
+          </div>
 
-        {/* Derecha: últimas 5 noticias de la categoría */}
-        <aside className="md:col-span-1">
-          <div className="flex flex-col gap-6">
-            {rightPosts.map((p) => {
-              const thumb = extractThumbFromBlocks(p) || '/placeholder.jpg'
-              const href = catSlug ? `/${catSlug}/${p.slug}` : `/posts/${p.slug}`
-              const date = getPostDate(p)
+          {/* Derecha */}
+          <aside className="md:col-span-1">
+            <div className="flex flex-col gap-6">
+              {rightPosts.map((p) => {
+                const thumb = extractThumbFromBlocks(p) || '/placeholder.jpg'
+                const href = `/posts/${p.slug}`
+                const date = getPostDate(p)
 
-              return (
-                <article key={p.id} className="flex items-center gap-4">
-                  <Link
-                    href={href}
-                    className="inline-block h-[72px] shrink-0 overflow-hidden  shadow-[0_4px_14px_rgba(0,0,0,0.15)]"
-                    title={p.title}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={thumb} alt={p.title} className="h-full w-full object-cover" />
-                  </Link>
-
-                  <div className="min-w-0">
-                    <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.3px] text-[#6c8b9a]">
-                      {sectionTitle}
-                    </div>
-
+                return (
+                  <article key={p.id} className="flex items-center gap-4">
                     <Link
                       href={href}
-                      className="block max-w-[28ch] truncate font-bold text-[#12313f] no-underline"
+                      className="inline-block h-[72px] w-[110px] shrink-0 overflow-hidden rounded-md shadow-[0_4px_14px_rgba(0,0,0,0.12)]"
                       title={p.title}
                     >
-                      {p.title}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={thumb} alt={p.title} className="h-full w-full object-cover" />
                     </Link>
 
-                    <div className="mt-1 text-xs text-[#6b7b85]">
-                      {date
-                        ? new Date(date).toLocaleDateString('es-MX', {
-                            day: '2-digit',
-                            month: 'long',
-                            year: 'numeric',
-                          })
-                        : ''}
+                    <div className="min-w-0">
+                      <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.3px] text-[#6c8b9a]">
+                        {sectionTitle}
+                      </div>
+
+                      <Link
+                        href={href}
+                        className="block max-w-[28ch] truncate font-bold text-[#12313f] no-underline"
+                        title={p.title}
+                      >
+                        {p.title}
+                      </Link>
+
+                      <div className="mt-1 text-xs text-[#6b7b85]">
+                        {date
+                          ? new Date(date).toLocaleDateString('es-MX', {
+                              day: '2-digit',
+                              month: 'long',
+                              year: 'numeric',
+                            })
+                          : ''}
+                      </div>
                     </div>
-                  </div>
-                </article>
-              )
-            })}
-          </div>
-        </aside>
+                  </article>
+                )
+              })}
+            </div>
+          </aside>
+        </div>
       </div>
     </section>
   )

@@ -1,4 +1,3 @@
-// blocks/TagsBlock/Component.tsx
 'use client'
 
 import Link from 'next/link'
@@ -72,6 +71,16 @@ function formatRelativeEs(dateISO?: string) {
 
 function getExcerpt(p?: Post) {
   return p?.excerpt || p?.summary || p?.meta?.description || ''
+}
+
+/**
+ * Truncado multilinea a 2 renglones con ellipsis (compatible).
+ */
+const twoLineClamp: React.CSSProperties = {
+  display: '-webkit-box',
+  WebkitLineClamp: 2,
+  WebkitBoxOrient: 'vertical',
+  overflow: 'hidden',
 }
 
 export default function TagsBlockComponent(props: Props) {
@@ -151,76 +160,83 @@ export default function TagsBlockComponent(props: Props) {
   const leftDate = getPostDate(leftPost)
 
   return (
-    <section className="px-4 md:px-[20%] mt-14">
-      {title ? (
-        <h2 className="mb-5 text-[clamp(22px,3.2vw,44px)] font-extrabold leading-tight text-[#0e1f28]">
-          {title}
-        </h2>
-      ) : null}
+    <section className="px-4 md:px-8 mt-14">
+      <div className="mx-auto max-w-[1220px]">
+        {title ? (
+          <h2 className="mb-5 text-[clamp(22px,3.2vw,44px)] font-extrabold leading-tight text-[#0e1f28] capitalize">
+            {title}
+          </h2>
+        ) : null}
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-        {/* IZQUIERDA: Hero grande (2/3) */}
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+          <aside className="lg:col-span-1">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+              {rightPosts.map((p) => {
+                const thumb = extractThumbFromBlocks(p) || '/placeholder.jpg'
+                const href = `/posts/${p.slug}`
+                const date = getPostDate(p)
 
-        {/* DERECHA: Grid 2x2 de tarjetas (4 items). Si rightCount > 4, se seguirán listando en grid. */}
-        <aside className="lg:col-span-1">
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-            {rightPosts.map((p) => {
-              const thumb = extractThumbFromBlocks(p) || '/placeholder.jpg'
-              const href = `/posts/${p.slug}`
-              const date = getPostDate(p)
-
-              return (
-                <article key={p.id}>
-                  <Link href={href} className="block no-underline">
-                    <div className="relative overflow-hidden rounded-lg bg-[#e9eef2]">
-                      <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={thumb}
-                          alt={p.title}
-                          className="absolute inset-0 h-full w-full object-cover"
-                        />
+                return (
+                  <article key={p.id}>
+                    <Link href={href} className="block no-underline">
+                      <div className="relative overflow-hidden rounded-lg bg-[#e9eef2]">
+                        <div className="relative w-full h-[140px] sm:h-[120px] lg:h-[100px]">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={thumb}
+                            alt={p.title}
+                            className="absolute inset-0 h-full w-full object-cover"
+                          />
+                        </div>
                       </div>
-                    </div>
 
-                    <h4 className="mt-3 text-[17px] font-extrabold leading-snug text-[#0e1f28] hover:underline">
-                      {p.title}
-                    </h4>
+                      <h4
+                        className="mt-3 text-[17px] font-extrabold leading-snug text-[#0e1f28] hover:underline"
+                        style={twoLineClamp}
+                        title={p.title}
+                      >
+                        {p.title}
+                      </h4>
 
-                    <div className="mt-1 text-xs text-[#6b7b85]">{formatRelativeEs(date)}</div>
-                  </Link>
-                </article>
-              )
-            })}
-          </div>
-        </aside>
-        <div className="lg:col-span-2">
-          <Link href={leftHref} className="block no-underline">
-            <div className="relative overflow-hidden rounded-lg bg-[#e9eef2]">
-              <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={leftThumb}
-                  alt={leftPost.title}
-                  className="absolute inset-0 h-full w-full object-cover"
-                />
-              </div>
+                      <div className="mt-1 text-xs text-[#6b7b85]">{formatRelativeEs(date)}</div>
+                    </Link>
+                  </article>
+                )
+              })}
             </div>
+          </aside>
+          <div className="lg:col-span-2">
+            <Link href={leftHref} className="block no-underline">
+              <div className="relative overflow-hidden rounded-lg bg-[#e9eef2]">
+                <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={leftThumb}
+                    alt={leftPost.title}
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                </div>
+              </div>
 
-            <h3 className="mt-4 text-[clamp(26px,3.2vw,40px)] font-extrabold leading-snug text-[#0e1f28]">
-              {leftPost.title}
-            </h3>
+              <h3
+                className="mt-4 text-[clamp(26px,3.2vw,40px)] font-extrabold leading-snug text-[#0e1f28]"
+                style={twoLineClamp}
+                title={leftPost.title}
+              >
+                {leftPost.title}
+              </h3>
 
-            {/* Subtítulo/Resumen */}
-            {getExcerpt(leftPost) ? (
-              <p className="mt-3 text-[15px] leading-relaxed text-[#2a3a43]">
-                {getExcerpt(leftPost)}
-              </p>
-            ) : null}
+              {/* Subtítulo/Resumen */}
+              {getExcerpt(leftPost) ? (
+                <p className="mt-3 text-[15px] leading-relaxed text-[#2a3a43] line-clamp-3">
+                  {getExcerpt(leftPost)}
+                </p>
+              ) : null}
 
-            {/* Fecha relativa */}
-            <div className="mt-3 text-sm text-[#6b7b85]">{formatRelativeEs(leftDate)}</div>
-          </Link>
+              {/* Fecha relativa */}
+              <div className="mt-3 text-sm text-[#6b7b85]">{formatRelativeEs(leftDate)}</div>
+            </Link>
+          </div>
         </div>
       </div>
     </section>

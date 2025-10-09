@@ -21,7 +21,6 @@ type Post = {
 
 type BlockData = {
   tag?: string
-  // tolera también venir como array desde otro bloque
   tags?: string[]
   title?: string
 }
@@ -31,16 +30,21 @@ type Props = Partial<BlockData> & { data?: BlockData }
 const API = process.env.NEXT_PUBLIC_SERVER_URL || ''
 const POST_TAGS_FIELD = 'tags'
 
-// Helpers
 function extractThumbFromBlocks(post?: Post | null): string | undefined {
   const blocks = post?.blocks
   if (!Array.isArray(blocks)) return undefined
   for (const b of blocks) {
-    const t = b?.blockType
-    if (t === 'hero' && b?.image?.url) return b.image.url as string
-    /* if (t === 'image' && b?.image?.url) return b.image.url as string
-    if (t === 'gallery' && Array.isArray(b?.images) && b.images[0]?.image?.url) */
-    return b.images[0].image.url as string
+    try {
+      const t = b?.blockType
+      if (t === 'hero' && b?.image?.url) return b.image.url as string
+      if (t === 'image' && b?.image?.url) return b.image.url as string
+      if (t === 'gallery' && Array.isArray(b?.images) && b.images[0]?.image?.url)
+        return b.images[0].image.url as string
+      if (b?.image?.url) return b.image.url as string
+    } catch (err) {
+      console.warn('extractThumbFromBlocks: formato inesperado', b)
+      continue
+    }
   }
   return undefined
 }
@@ -87,10 +91,19 @@ function getDurationLabel(p?: Post) {
   return ''
 }
 
+/**
+ * Truncado multilinea a 2 renglones con ellipsis.
+ */
+const twoLineClamp: React.CSSProperties = {
+  display: '-webkit-box',
+  WebkitLineClamp: 2,
+  WebkitBoxOrient: 'vertical',
+  overflow: 'hidden',
+}
+
 export default function SingleTagBlockComponent(props: Props) {
   const cfg = (props.data ?? (props as BlockData)) as BlockData | undefined
 
-  // Acepta tag o bien la primera de un array tags
   const tagValue = useMemo(() => {
     if (cfg?.tag) return String(cfg.tag).trim()
     if (Array.isArray(cfg?.tags) && cfg!.tags.length) return String(cfg!.tags[0]).trim()
@@ -104,11 +117,8 @@ export default function SingleTagBlockComponent(props: Props) {
 
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
-
-  // Queremos 5 posts (centro, izquierda big+mini, derecha big+mini)
   const LIMIT = 5
 
-  // Build query params
   const buildParams = (sort: '-publishedAt' | '-createdAt') => {
     const qs = new URLSearchParams({ depth: '2', limit: String(LIMIT + 2), sort })
     qs.set(`where[and][0][status][equals]`, 'published')
@@ -121,14 +131,12 @@ export default function SingleTagBlockComponent(props: Props) {
     const run = async () => {
       setLoading(true)
       try {
-        // 1) por publishedAt
         let res = await fetch(`${API}/api/posts?${buildParams('-publishedAt').toString()}`, {
           cache: 'no-store',
         })
         let data = await res.json()
         let docs: Post[] = data?.docs || []
 
-        // 2) fallback por createdAt
         if (!docs.length) {
           res = await fetch(`${API}/api/posts?${buildParams('-createdAt').toString()}`, {
             cache: 'no-store',
@@ -137,7 +145,6 @@ export default function SingleTagBlockComponent(props: Props) {
           docs = data?.docs || []
         }
 
-        // Únicos por id
         const seen = new Set<string>()
         const uniq = docs.filter((d) => {
           if (!d?.id || seen.has(d.id)) return false
@@ -158,7 +165,6 @@ export default function SingleTagBlockComponent(props: Props) {
 
   if (loading || !tagValue || posts.length === 0) return null
 
-  // Asignación por posición
   const center = posts[0]
   const leftBig = posts[1] ?? center
   const leftSmall = posts[2] ?? leftBig
@@ -173,128 +179,153 @@ export default function SingleTagBlockComponent(props: Props) {
     const label = dur || formatRelativeEs(getPostDate(post))
     if (!label) return null
     return (
-      <div className="absolute left-2 top-2 rounded bg-[rgba(0,0,0,0.65)] px-2 py-0.5 text-[12px] font-semibold text-white">
+      <div className="absolute left-2 top-2 z-10 rounded-md bg-[rgba(0,0,0,0.7)] px-2 py-0.5 text-[12px] font-semibold text-white">
         {label}
       </div>
     )
   }
 
   return (
-    <section className="px-4 md:px-[20%] mt-14">
-      <h2 className="mb-5 text-[clamp(24px,3vw,40px)] font-extrabold text-[#0e1f28]">
-        {sectionTitle}
-      </h2>
+    <section className="px-4 md:px-8 mt-14">
+      <div className="mx-auto max-w-[1220px]">
+        <h2 className="mb-6 text-[clamp(24px,3vw,40px)] font-extrabold text-[#0e1f28] capitalize">
+          {sectionTitle}
+        </h2>
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-        {/* Izquierda (3/12): grande + mini */}
-        <div className="lg:col-span-3">
-          {/* Grande */}
-          <Link href={href(leftBig)} className="block no-underline">
-            <div className="relative overflow-hidden rounded-lg bg-[#e9eef2]">
-              <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 items-start">
+          {/* Izquierda (3/12) */}
+          <div className="lg:col-span-3 space-y-6">
+            <Link href={href(leftBig)} className="block no-underline group">
+              <div className="relative overflow-hidden rounded-lg bg-[#e9eef2] shadow-sm transition-transform transform-gpu group-hover:scale-[1.01]">
+                <div className="w-full h-[180px] sm:h-[200px]">
+                  <img
+                    src={thumb(leftBig)}
+                    alt={leftBig.title}
+                    className="h-full w-full object-cover"
+                  />
+                  {/*   <Badge post={leftBig} /> */}
+                </div>
+              </div>
+              <h3
+                className="mt-3 text-[18px] font-extrabold leading-snug text-[#0e1f28] hover:underline"
+                style={twoLineClamp}
+                title={leftBig.title}
+              >
+                {leftBig.title}
+              </h3>
+            </Link>
+
+            <Link href={href(leftSmall)} className="mt-1 flex items-start gap-4 no-underline group">
+              <div className="relative h-[72px] w-[128px] shrink-0 overflow-hidden rounded-md bg-[#e9eef2] shadow-sm">
                 <img
-                  src={thumb(leftBig)}
-                  alt={leftBig.title}
-                  className="absolute inset-0 h-full w-full object-cover"
+                  src={thumb(leftSmall)}
+                  alt={leftSmall.title}
+                  className="h-full w-full object-cover"
                 />
-                <Badge post={leftBig} />
+                {/* <Badge post={leftSmall} /> */}
               </div>
-            </div>
-            <h3 className="mt-3 text-[18px] font-extrabold leading-snug text-[#0e1f28] hover:underline">
-              {leftBig.title}
-            </h3>
-          </Link>
-
-          {/* Mini */}
-          <Link href={href(leftSmall)} className="mt-6 flex items-start gap-4 no-underline">
-            <div className="relative h-[72px] w-[128px] shrink-0 overflow-hidden rounded-md bg-[#e9eef2]">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={thumb(leftSmall)}
-                alt={leftSmall.title}
-                className="absolute inset-0 h-full w-full object-cover"
-              />
-              <Badge post={leftSmall} />
-            </div>
-            <div className="min-w-0">
-              <h4 className="line-clamp-3 text-[15px] font-semibold leading-snug text-[#0e1f28] hover:underline">
-                {leftSmall.title}
-              </h4>
-              <div className="mt-1 text-xs text-[#6b7b85]">
-                {formatRelativeEs(getPostDate(leftSmall))}
+              <div className="min-w-0">
+                <h4
+                  className="text-[15px] font-semibold leading-snug text-[#0e1f28] group-hover:underline"
+                  style={twoLineClamp}
+                  title={leftSmall.title}
+                >
+                  {leftSmall.title}
+                </h4>
+                <div className="mt-1 text-xs text-[#6b7b85]">
+                  {formatRelativeEs(getPostDate(leftSmall))}
+                </div>
               </div>
-            </div>
-          </Link>
-        </div>
+            </Link>
+          </div>
 
-        {/* Centro (6/12): hero grande */}
-        <div className="lg:col-span-6">
-          <Link href={href(center)} className="block no-underline">
-            <div className="relative overflow-hidden rounded-lg bg-[#e9eef2]">
-              <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={thumb(center)}
-                  alt={center.title}
-                  className="absolute inset-0 h-full w-full object-cover"
-                />
-                <Badge post={center} />
+          {/* Centro (6/12) */}
+          <div className="lg:col-span-6">
+            <Link href={href(center)} className="block no-underline group">
+              <div className="relative overflow-hidden rounded-lg bg-[#e9eef2] shadow-md transition-transform transform-gpu group-hover:scale-[1.01]">
+                <div className="w-full h-[360px] sm:h-[420px]">
+                  <img
+                    src={thumb(center)}
+                    alt={center.title}
+                    className="h-full w-full object-cover"
+                  />
+                  <Badge post={center} />
+                </div>
               </div>
-            </div>
-            <h3 className="mt-4 text-[clamp(22px,2.6vw,34px)] font-extrabold leading-snug text-[#0e1f28]">
-              {center.title}
-            </h3>
-            {getExcerpt(center) ? (
-              <p className="mt-2 text-[15px] leading-relaxed text-[#2a3a43]">
-                {getExcerpt(center)}
-              </p>
-            ) : null}
-          </Link>
-        </div>
+              <h3
+                className="mt-4 text-[clamp(22px,2.6vw,34px)] font-extrabold leading-snug text-[#0e1f28]"
+                style={twoLineClamp}
+                title={center.title}
+              >
+                {center.title}
+              </h3>
+              {getExcerpt(center) ? (
+                <p className="mt-2 text-[15px] leading-relaxed text-[#2a3a43] line-clamp-3">
+                  {getExcerpt(center)}
+                </p>
+              ) : null}
+            </Link>
+          </div>
 
-        {/* Derecha (3/12): grande tipo “imagen izq + texto der” + mini */}
-        <div className="lg:col-span-3">
-          {/* Grande lado a lado */}
-          <Link href={href(rightBig)} className="block no-underline">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="relative overflow-hidden rounded-lg bg-[#e9eef2]">
-                <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
+          {/* Derecha (3/12) */}
+          <div className="lg:col-span-3 space-y-6">
+            <Link href={href(rightBig)} className="block no-underline group">
+              <div className="flex items-start gap-4">
+                <div className="relative overflow-hidden rounded-lg bg-[#e9eef2] shadow-sm flex-shrink-0 w-[120px] sm:w-[140px] h-[84px] sm:h-[96px]">
                   <img
                     src={thumb(rightBig)}
                     alt={rightBig.title}
-                    className="absolute inset-0 h-full w-full object-cover"
+                    className="h-full w-full object-cover"
                   />
-                  <Badge post={rightBig} />
+                  {/* <Badge post={rightBig} /> */}
+                </div>
+                <div className="min-w-0">
+                  <h3
+                    className="text-[18px] font-extrabold leading-snug text-[#0e1f28] hover:underline"
+                    style={twoLineClamp}
+                    title={rightBig.title}
+                  >
+                    {rightBig.title}
+                  </h3>
+                  {getExcerpt(rightBig) ? (
+                    <p className="mt-2 text-sm text-[#6b7b85]" style={twoLineClamp}>
+                      {getExcerpt(rightBig)}
+                    </p>
+                  ) : (
+                    <div className="mt-2 text-xs text-[#6b7b85]">
+                      {formatRelativeEs(getPostDate(rightBig))}
+                    </div>
+                  )}
                 </div>
               </div>
-              <h3 className="text-[18px] font-extrabold leading-snug text-[#0e1f28] hover:underline">
-                {rightBig.title}
-              </h3>
-            </div>
-          </Link>
+            </Link>
 
-          {/* Mini */}
-          <Link href={href(rightSmall)} className="mt-6 flex items-start gap-4 no-underline">
-            <div className="relative h-[72px] w-[128px] shrink-0 overflow-hidden rounded-md bg-[#e9eef2]">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={thumb(rightSmall)}
-                alt={rightSmall.title}
-                className="absolute inset-0 h-full w-full object-cover"
-              />
-              <Badge post={rightSmall} />
-            </div>
-            <div className="min-w-0">
-              <h4 className="line-clamp-3 text-[15px] font-semibold leading-snug text-[#0e1f28] hover:underline">
-                {rightSmall.title}
-              </h4>
-              <div className="mt-1 text-xs text-[#6b7b85]">
-                {formatRelativeEs(getPostDate(rightSmall))}
+            <Link
+              href={href(rightSmall)}
+              className="mt-1 flex items-start gap-4 no-underline group"
+            >
+              <div className="relative h-[72px] w-[128px] shrink-0 overflow-hidden rounded-md bg-[#e9eef2] shadow-sm">
+                <img
+                  src={thumb(rightSmall)}
+                  alt={rightSmall.title}
+                  className="h-full w-full object-cover"
+                />
+                {/*  <Badge post={rightSmall} /> */}
               </div>
-            </div>
-          </Link>
+              <div className="min-w-0">
+                <h4
+                  className="text-[15px] font-semibold leading-snug text-[#0e1f28] hover:underline"
+                  style={twoLineClamp}
+                  title={rightSmall.title}
+                >
+                  {rightSmall.title}
+                </h4>
+                <div className="mt-1 text-xs text-[#6b7b85]">
+                  {formatRelativeEs(getPostDate(rightSmall))}
+                </div>
+              </div>
+            </Link>
+          </div>
         </div>
       </div>
     </section>
