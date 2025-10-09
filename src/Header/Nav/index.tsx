@@ -53,7 +53,6 @@ export const HeaderNav: React.FC<{
         ))}
       </div> */}
 
-      {/* Search (opcional) */}
       {showSearch && (
         <Link
           href="/search"
