@@ -14,6 +14,6 @@ export const getMediaUrl = (url: string | null | undefined, cacheTag?: string | 
   }
 
   // Otherwise prepend client-side URL
-  const baseUrl = 'https://storage.googleapis.com/payload-diarioencontexto/'
+  const baseUrl = 'https://storage.googleapis.com/payload-radarmex/'
   return cacheTag ? `${baseUrl}${url}?${cacheTag}` : `${baseUrl}${url}`
 }

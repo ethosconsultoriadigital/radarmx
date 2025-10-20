@@ -1,7 +1,9 @@
-'use client'
-
 import Link from 'next/link'
-import { useEffect, useMemo, useState } from 'react'
+import { draftMode } from 'next/headers'
+import { unstable_noStore as noStore } from 'next/cache'
+import { getPayload } from 'payload'
+import configPromise from '@payload-config'
+import type { CSSProperties } from 'react'
 
 type Post = {
   id: string
@@ -25,7 +27,6 @@ type BlockData = {
 }
 type Props = Partial<BlockData> & { data?: BlockData }
 
-const API = process.env.NEXT_PUBLIC_SERVER_URL || ''
 const POST_TAGS_FIELD = 'tags'
 
 // Imagen desde blocks del post (ajusta a tu schema si tienes un campo thumbnail directo)
@@ -33,11 +34,19 @@ function extractThumbFromBlocks(post?: Post | null): string | undefined {
   const blocks = post?.blocks
   if (!Array.isArray(blocks)) return undefined
   for (const b of blocks) {
-    const t = b?.blockType
-    if (t === 'hero' && b?.image?.url) return b.image.url as string
-    /* if (t === 'image' && b?.image?.url) return b.image.url as string
-    if (t === 'gallery' && Array.isArray(b?.images) && b.images[0]?.image?.url) */
-    return b.images[0].image.url as string
+    try {
+      if (!b) continue
+      const t = b?.blockType
+      if (t === 'hero' && b?.image?.url) return b.image.url as string
+      if (t === 'image' && b?.image?.url) return b.image.url as string
+      if (t === 'gallery' && Array.isArray(b?.images)) {
+        const first = b.images[0]
+        if (first?.image?.url) return first.image.url as string
+      }
+      if (b?.image?.url) return b.image.url as string
+    } catch {
+      continue
+    }
   }
   return undefined
 }
@@ -76,84 +85,81 @@ function getExcerpt(p?: Post) {
 /**
  * Truncado multilinea a 2 renglones con ellipsis (compatible).
  */
-const twoLineClamp: React.CSSProperties = {
+const twoLineClamp: CSSProperties = {
   display: '-webkit-box',
   WebkitLineClamp: 2,
   WebkitBoxOrient: 'vertical',
   overflow: 'hidden',
 }
 
-export default function TagsBlockComponent(props: Props) {
+async function getPostsByTags(inputTags: string[], matchMode: 'any' | 'all', total: number) {
+  const { isEnabled: draft } = await draftMode()
+  const payload = await getPayload({ config: configPromise })
+
+  const tagClauses = inputTags.map((tag) => ({
+    [POST_TAGS_FIELD]: { contains: tag },
+  }))
+
+  const where: any = { and: [] as any[] }
+  if (!draft) where.and.push({ status: { equals: 'published' } })
+
+  if (matchMode === 'all') {
+    // Debe contener TODOS los tags
+    where.and.push(...tagClauses)
+  } else {
+    // Debe contener AL MENOS uno
+    where.and.push({ or: tagClauses })
+  }
+
+  // 1) publishedAt desc
+  const res1 = await payload.find({
+    collection: 'posts',
+    draft,
+    depth: 2,
+    limit: total,
+    sort: '-publishedAt',
+    overrideAccess: draft,
+    where,
+  })
+
+  let docs = (res1.docs || []) as unknown as Post[]
+
+  // 2) fallback createdAt desc
+  if (!docs.length) {
+    const res2 = await payload.find({
+      collection: 'posts',
+      draft,
+      depth: 2,
+      limit: total,
+      sort: '-createdAt',
+      overrideAccess: draft,
+      where,
+    })
+    docs = (res2.docs || []) as unknown as Post[]
+  }
+
+  return docs
+}
+
+export default async function TagsBlockComponent(props: Props) {
+  // Evita caché en este render
+  noStore()
+
   // Soporta {...block} o data={block}
   const cfg = (props.data ?? (props as BlockData)) as BlockData | undefined
   const inputTags = (cfg?.tags || []).map((t) => String(t).trim()).filter(Boolean)
-  const matchMode = cfg?.matchMode || 'any'
-  const rightCount = Math.max(1, Number(cfg?.rightCount ?? 4)) // 4 para 2x2 en la derecha
+  const matchMode = (cfg?.matchMode || 'any') as 'any' | 'all'
+  const rightCount = Math.max(1, Number(cfg?.rightCount ?? 4))
+  const total = 1 + rightCount
 
-  const [leftPost, setLeftPost] = useState<Post | null>(null)
-  const [rightPosts, setRightPosts] = useState<Post[]>([])
-  const [loading, setLoading] = useState(true)
+  if (!inputTags.length) return null
 
-  const title = useMemo(() => {
-    if (cfg?.title) return cfg.title
-    if (!inputTags.length) return ''
-    return inputTags.join(' · ')
-  }, [cfg?.title, inputTags])
+  const title = cfg?.title || inputTags.join(' · ')
+  const docs = await getPostsByTags(inputTags, matchMode, total)
+  const leftPost = docs[0] ?? null
+  const rightPosts = docs.slice(1, total)
 
-  // WHERE dinámico para un campo de texto hasMany en Posts (tags:string[])
-  const buildParams = (sort: '-publishedAt' | '-createdAt', total: number) => {
-    const p = new URLSearchParams({ depth: '2', limit: String(total), sort })
-    p.set(`where[and][0][status][equals]`, 'published')
-    if (matchMode === 'all') {
-      inputTags.forEach((tag, i) => {
-        p.set(`where[and][${i + 1}][${POST_TAGS_FIELD}][contains]`, tag)
-      })
-    } else {
-      inputTags.forEach((tag, i) => {
-        p.set(`where[and][1][or][${i}][${POST_TAGS_FIELD}][contains]`, tag)
-      })
-    }
-    return p
-  }
-
-  useEffect(() => {
-    if (!inputTags.length) return
-    const run = async () => {
-      setLoading(true)
-      try {
-        const total = 1 + rightCount
-
-        // 1) más recientes por publishedAt
-        let res = await fetch(`${API}/api/posts?${buildParams('-publishedAt', total).toString()}`, {
-          cache: 'no-store',
-        })
-        let data = await res.json()
-        let docs: Post[] = data?.docs || []
-
-        // 2) fallback por createdAt
-        if (!docs.length) {
-          res = await fetch(`${API}/api/posts?${buildParams('-createdAt', total).toString()}`, {
-            cache: 'no-store',
-          })
-          data = await res.json()
-          docs = data?.docs || []
-        }
-
-        setLeftPost(docs[0] ?? null)
-        setRightPosts(docs.slice(1, total))
-      } catch (e) {
-        console.error(e)
-        setLeftPost(null)
-        setRightPosts([])
-      } finally {
-        setLoading(false)
-      }
-    }
-    run()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inputTags.join('|'), matchMode, rightCount])
-
-  if (loading || !inputTags.length || !leftPost) return null
+  if (!leftPost) return null
 
   const leftHref = `/posts/${leftPost.slug}`
   const leftThumb = extractThumbFromBlocks(leftPost) || '/placeholder.jpg'
@@ -205,6 +211,7 @@ export default function TagsBlockComponent(props: Props) {
               })}
             </div>
           </aside>
+
           <div className="lg:col-span-2">
             <Link href={leftHref} className="block no-underline">
               <div className="relative overflow-hidden rounded-lg bg-[#e9eef2]">
@@ -226,14 +233,12 @@ export default function TagsBlockComponent(props: Props) {
                 {leftPost.title}
               </h3>
 
-              {/* Subtítulo/Resumen */}
               {getExcerpt(leftPost) ? (
                 <p className="mt-3 text-[15px] leading-relaxed text-[#2a3a43] line-clamp-3">
                   {getExcerpt(leftPost)}
                 </p>
               ) : null}
 
-              {/* Fecha relativa */}
               <div className="mt-3 text-sm text-[#6b7b85]">{formatRelativeEs(leftDate)}</div>
             </Link>
           </div>
