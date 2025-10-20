@@ -1,7 +1,9 @@
-'use client'
-
 import Link from 'next/link'
-import { useEffect, useMemo, useState } from 'react'
+import { draftMode } from 'next/headers'
+import { unstable_noStore as noStore } from 'next/cache'
+import { getPayload } from 'payload'
+import configPromise from '@payload-config'
+import type { CSSProperties } from 'react'
 
 type Post = {
   id: string
@@ -27,7 +29,6 @@ type BlockData = {
 
 type Props = Partial<BlockData> & { data?: BlockData }
 
-const API = process.env.NEXT_PUBLIC_SERVER_URL || ''
 const POST_TAGS_FIELD = 'tags'
 
 function extractThumbFromBlocks(post?: Post | null): string | undefined {
@@ -35,14 +36,16 @@ function extractThumbFromBlocks(post?: Post | null): string | undefined {
   if (!Array.isArray(blocks)) return undefined
   for (const b of blocks) {
     try {
+      if (!b) continue
       const t = b?.blockType
       if (t === 'hero' && b?.image?.url) return b.image.url as string
       if (t === 'image' && b?.image?.url) return b.image.url as string
-      if (t === 'gallery' && Array.isArray(b?.images) && b.images[0]?.image?.url)
-        return b.images[0].image.url as string
+      if (t === 'gallery' && Array.isArray(b?.images)) {
+        const first = b.images[0]
+        if (first?.image?.url) return first.image.url as string
+      }
       if (b?.image?.url) return b.image.url as string
-    } catch (err) {
-      console.warn('extractThumbFromBlocks: formato inesperado', b)
+    } catch {
       continue
     }
   }
@@ -94,76 +97,79 @@ function getDurationLabel(p?: Post) {
 /**
  * Truncado multilinea a 2 renglones con ellipsis.
  */
-const twoLineClamp: React.CSSProperties = {
+const twoLineClamp: CSSProperties = {
   display: '-webkit-box',
   WebkitLineClamp: 2,
   WebkitBoxOrient: 'vertical',
   overflow: 'hidden',
 }
 
-export default function SingleTagBlockComponent(props: Props) {
-  const cfg = (props.data ?? (props as BlockData)) as BlockData | undefined
+async function getPostsByTag(tagValue: string) {
+  const { isEnabled: draft } = await draftMode()
+  const payload = await getPayload({ config: configPromise })
 
-  const tagValue = useMemo(() => {
-    if (cfg?.tag) return String(cfg.tag).trim()
-    if (Array.isArray(cfg?.tags) && cfg!.tags.length) return String(cfg!.tags[0]).trim()
-    return ''
-  }, [cfg?.tag, cfg?.tags])
-
-  const sectionTitle = useMemo(() => {
-    if (cfg?.title) return cfg.title
-    return tagValue || 'Sección'
-  }, [cfg?.title, tagValue])
-
-  const [posts, setPosts] = useState<Post[]>([])
-  const [loading, setLoading] = useState(true)
-  const LIMIT = 5
-
-  const buildParams = (sort: '-publishedAt' | '-createdAt') => {
-    const qs = new URLSearchParams({ depth: '2', limit: String(LIMIT + 2), sort })
-    qs.set(`where[and][0][status][equals]`, 'published')
-    qs.set(`where[and][1][${POST_TAGS_FIELD}][contains]`, tagValue)
-    return qs
+  // where base: por tag; si NO estamos en draft, filtramos por publicados
+  const whereBase: any = {
+    and: [{ [POST_TAGS_FIELD]: { contains: tagValue } }],
+  }
+  if (!draft) {
+    whereBase.and.unshift({ status: { equals: 'published' } })
   }
 
-  useEffect(() => {
-    if (!tagValue) return
-    const run = async () => {
-      setLoading(true)
-      try {
-        let res = await fetch(`${API}/api/posts?${buildParams('-publishedAt').toString()}`, {
-          cache: 'no-store',
-        })
-        let data = await res.json()
-        let docs: Post[] = data?.docs || []
+  // 1) Orden por publishedAt desc
+  const res1 = await payload.find({
+    collection: 'posts',
+    draft,
+    depth: 2,
+    limit: 7, // pido algunos extra para de-duplicar
+    sort: '-publishedAt',
+    overrideAccess: draft,
+    where: whereBase,
+  })
+  let docs = (res1.docs || []) as unknown as Post[]
 
-        if (!docs.length) {
-          res = await fetch(`${API}/api/posts?${buildParams('-createdAt').toString()}`, {
-            cache: 'no-store',
-          })
-          data = await res.json()
-          docs = data?.docs || []
-        }
+  // 2) Fallback: mismo filtro pero por createdAt desc
+  if (!docs.length) {
+    const res2 = await payload.find({
+      collection: 'posts',
+      draft,
+      depth: 2,
+      limit: 7,
+      sort: '-createdAt',
+      overrideAccess: draft,
+      where: whereBase,
+    })
+    docs = (res2.docs || []) as unknown as Post[]
+  }
 
-        const seen = new Set<string>()
-        const uniq = docs.filter((d) => {
-          if (!d?.id || seen.has(d.id)) return false
-          seen.add(d.id)
-          return true
-        })
+  // De-dup por id
+  const seen = new Set<string>()
+  const uniq = docs.filter((d) => {
+    if (!d?.id || seen.has(d.id)) return false
+    seen.add(d.id)
+    return true
+  })
 
-        setPosts(uniq.slice(0, LIMIT))
-      } catch (e) {
-        console.error(e)
-        setPosts([])
-      } finally {
-        setLoading(false)
-      }
-    }
-    run()
-  }, [tagValue])
+  return uniq
+}
 
-  if (loading || !tagValue || posts.length === 0) return null
+export default async function SingleTagBlockComponent(props: Props) {
+  // Fuerza render dinámico (sin caché) en este render
+  noStore()
+
+  const cfg = (props.data ?? (props as BlockData)) as BlockData | undefined
+  const tagValue =
+    (cfg?.tag && String(cfg.tag).trim()) ||
+    (Array.isArray(cfg?.tags) && cfg!.tags.length ? String(cfg!.tags[0]).trim() : '')
+
+  if (!tagValue) return null
+
+  const sectionTitle = cfg?.title || tagValue || 'Sección'
+
+  const LIMIT = 5
+  const docs = await getPostsByTag(tagValue)
+  const posts = docs.slice(0, LIMIT)
+  if (posts.length === 0) return null
 
   const center = posts[0]
   const leftBig = posts[1] ?? center
@@ -203,7 +209,7 @@ export default function SingleTagBlockComponent(props: Props) {
                     alt={leftBig.title}
                     className="h-full w-full object-cover"
                   />
-                  {/*   <Badge post={leftBig} /> */}
+                  {/* <Badge post={leftBig} /> */}
                 </div>
               </div>
               <h3
@@ -310,7 +316,7 @@ export default function SingleTagBlockComponent(props: Props) {
                   alt={rightSmall.title}
                   className="h-full w-full object-cover"
                 />
-                {/*  <Badge post={rightSmall} /> */}
+                {/* <Badge post={rightSmall} /> */}
               </div>
               <div className="min-w-0">
                 <h4

@@ -108,7 +108,7 @@ export default async function CategoryPage({ params }: PageProps) {
         <>
           <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {posts.map((post: any) => {
-              const href = `/post/${post.slug || post.id}`
+              const href = `/posts/${post.slug || post.id}`
 
               const hero = post?.heroImage || post?.image || null
               const imgUrl = hero?.url

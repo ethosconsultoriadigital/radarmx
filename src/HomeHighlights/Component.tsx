@@ -1,7 +1,8 @@
-'use client'
-
 import Link from 'next/link'
-import { useEffect, useMemo, useState } from 'react'
+import { draftMode } from 'next/headers'
+import { unstable_noStore as noStore } from 'next/cache'
+import { getPayload } from 'payload'
+import configPromise from '@payload-config'
 
 type Media = { url?: string; alt?: string }
 type Category = { id: string; title?: string; slug?: string; color?: string }
@@ -13,7 +14,6 @@ type PostDoc = {
   publishedAt?: string
   createdAt?: string
   updatedAt?: string
-  // Si tienes campos de fecha personalizados en tu schema, añade aquí también:
   publishDate?: string
   date?: string
   categories?: (Category | string)[]
@@ -33,16 +33,21 @@ type GlobalConfig = {
   columns?: ColumnCfg[]
 }
 
-const API = process.env.NEXT_PUBLIC_SERVER_URL || ''
+// Si quieres forzar esto a SSR desde el segmento (page/layout), añade allí:
+// export const dynamic = 'force-dynamic'
+// export const revalidate = 0
+// export const runtime = 'nodejs'
 
 function extractThumbFromBlocks(blocks?: any[]): string | undefined {
   if (!Array.isArray(blocks)) return undefined
   for (const b of blocks) {
+    if (!b) continue
     const t = b?.blockType
     if (t === 'hero' && b?.image?.url) return b.image.url as string
-    /* if (t === 'image' && b?.image?.url) return b.image.url as string
-    if (t === 'gallery' && Array.isArray(b?.images) && b.images[0]?.image?.url) */
-    return b.images[0].image.url as string
+    if (t === 'image' && b?.image?.url) return b.image.url as string
+    if (t === 'gallery' && Array.isArray(b?.images) && b.images[0]?.image?.url) {
+      return b.images[0].image.url as string
+    }
   }
   return undefined
 }
@@ -58,85 +63,113 @@ function getPostDate(post?: Partial<PostDoc>): string | undefined {
   )
 }
 
-export default function HomeHighlights() {
-  const [cfg, setCfg] = useState<GlobalConfig | null>(null)
-  const [items, setItems] = useState<
-    { post: PostDoc; category?: Category; thumb?: string; date?: string }[]
-  >([])
-  const [loading, setLoading] = useState(true)
+async function getHomeHighlightsData() {
+  const { isEnabled: draft } = await draftMode()
+  const payload = await getPayload({ config: configPromise })
 
-  useEffect(() => {
-    const run = async () => {
-      try {
-        const g: GlobalConfig = await fetch(`${API}/api/globals/home-highlights?depth=2`, {
-          cache: 'no-store',
-        }).then((r) => r.json())
-        setCfg(g)
+  // Lee el global con depth=2 para resolver relaciones
+  const g = (await payload.findGlobal({
+    slug: 'home-highlights',
+    depth: 2,
+    draft,
+  })) as GlobalConfig | null
 
-        const cols = (g?.columns || []).slice(0, 4)
-        const out: { post: PostDoc; category?: Category; thumb?: string; date?: string }[] = []
+  const cfg: GlobalConfig | null = g ?? null
+  const cols = (cfg?.columns || []).slice(0, 4)
 
-        for (const col of cols) {
-          if (col?.mode === 'manualPost' && col.post && typeof col.post === 'object') {
-            const post = col.post as PostDoc
-            const cat =
-              (Array.isArray(post.categories) && (post.categories[0] as Category)) || undefined
-            const thumb = extractThumbFromBlocks(post.blocks) || '/placeholder.jpg'
-            const date = col.dateOverride || getPostDate(post)
-            out.push({ post, category: cat, thumb, date })
-            continue
-          }
+  const items: { post: PostDoc; category?: Category; thumb?: string; date?: string }[] = []
 
-          if (col?.mode === 'latestByCategory' && col.category) {
-            const catId =
-              typeof col.category === 'object'
-                ? (col.category as Category).id
-                : String(col.category)
-
-            const qs = new URLSearchParams({
-              'where[and][0][status][equals]': 'published',
-              'where[and][1][categories][contains]': String(catId),
-              depth: '2',
-              limit: '1',
-              sort: '-publishedAt',
-            })
-
-            const res = await fetch(`${API}/api/posts?${qs.toString()}`, { cache: 'no-store' })
-            const data = await res.json()
-            const post: PostDoc | undefined = data?.docs?.[0]
-
-            if (post) {
-              const cat = typeof col.category === 'object' ? (col.category as Category) : undefined
-              const thumb = extractThumbFromBlocks(post.blocks) || '/placeholder.jpg'
-              const date = col.dateOverride || getPostDate(post)
-              out.push({ post, category: cat, thumb, date })
-            } else {
-              out.push(undefined as any)
-            }
-          } else {
-            out.push(undefined as any)
-          }
-        }
-
-        while (out.length < 4) out.push(undefined as any)
-        setItems(out)
-      } catch (e) {
-        console.error(e)
-      } finally {
-        setLoading(false)
-      }
+  for (const col of cols) {
+    if (!col) {
+      items.push(undefined as any)
+      continue
     }
-    run()
-  }, [])
 
-  const bgUrl = useMemo(() => {
-    if (!cfg?.background) return undefined
-    return typeof cfg.background === 'object' && (cfg.background as Media).url
-      ? (cfg.background as Media).url
-      : undefined
-  }, [cfg])
+    // Modo: post manual
+    if (col.mode === 'manualPost' && col.post) {
+      let post: PostDoc | null = null
 
-  if (loading) return <div style={{ height: 220 }} />
+      if (typeof col.post === 'object') {
+        post = col.post as PostDoc
+      } else {
+        // Si vino como ID
+        try {
+          const byId = await payload.findByID({
+            collection: 'posts',
+            id: String(col.post),
+            draft,
+            depth: 2,
+          })
+          post = byId as unknown as PostDoc
+        } catch {
+          post = null
+        }
+      }
+
+      if (post) {
+        const cat =
+          (Array.isArray(post.categories) && (post.categories[0] as Category)) || undefined
+        const thumb = extractThumbFromBlocks(post.blocks) || '/placeholder.jpg'
+        const date = col.dateOverride || getPostDate(post)
+        items.push({ post, category: cat, thumb, date })
+      } else {
+        items.push(undefined as any)
+      }
+      continue
+    }
+
+    // Modo: último por categoría
+    if (col.mode === 'latestByCategory' && col.category) {
+      const catId =
+        typeof col.category === 'object' ? (col.category as Category).id : String(col.category)
+
+      // Filtra por status publicado y categoría
+      const res = await payload.find({
+        collection: 'posts',
+        draft,
+        depth: 2,
+        limit: 1,
+        sort: '-publishedAt',
+        where: {
+          and: [
+            { status: { equals: 'published' } },
+            // Para relaciones (array), equals suele funcionar; si tu schema requiere, cambia a { in: [catId] }
+            { categories: { equals: catId } },
+          ],
+        },
+      })
+
+      const post = res.docs?.[0] as unknown as PostDoc | undefined
+      if (post) {
+        const cat = typeof col.category === 'object' ? (col.category as Category) : undefined
+        const thumb = extractThumbFromBlocks(post.blocks) || '/placeholder.jpg'
+        const date = col.dateOverride || getPostDate(post)
+        items.push({ post, category: cat, thumb, date })
+      } else {
+        items.push(undefined as any)
+      }
+      continue
+    }
+
+    items.push(undefined as any)
+  }
+
+  while (items.length < 4) items.push(undefined as any)
+
+  // Background
+  let bgUrl: string | undefined
+  if (cfg?.background && typeof cfg.background === 'object') {
+    bgUrl = (cfg.background as Media).url
+  }
+
+  return { cfg, items, bgUrl }
+}
+
+export default async function HomeHighlights() {
+  // Garantiza que no se cachee el resultado de este componente
+  noStore()
+
+  const { cfg, items, bgUrl } = await getHomeHighlightsData()
   if (!cfg) return null
 
   return (
@@ -170,7 +203,7 @@ export default function HomeHighlights() {
               return (
                 <article
                   key={`${post.id}-${idx}`}
-                  className="flex  items-start gap-4 md:flex-row md:items-center md:gap-4"
+                  className="flex items-start gap-4 md:flex-row md:items-center md:gap-4"
                 >
                   <Link
                     href={href}

@@ -1,7 +1,9 @@
-'use client'
-
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { draftMode } from 'next/headers'
+import { unstable_noStore as noStore } from 'next/cache'
+import { getPayload } from 'payload'
+import configPromise from '@payload-config'
+import type { CSSProperties } from 'react'
 
 type Category = { id: string; slug?: string; title?: string }
 type Post = {
@@ -15,17 +17,18 @@ type Post = {
   blocks?: any[]
 }
 
-const API = process.env.NEXT_PUBLIC_SERVER_URL || ''
-
 function extractThumbFromBlocks(post?: Post | null): string | undefined {
   const blocks = post?.blocks
   if (!Array.isArray(blocks)) return undefined
   for (const b of blocks) {
+    if (!b) continue
     const t = b?.blockType
     if (t === 'hero' && b?.image?.url) return b.image.url as string
-    /* if (t === 'image' && b?.image?.url) return b.image.url as string
-    if (t === 'gallery' && Array.isArray(b?.images) && b.images[0]?.image?.url) */
-    return b.images[0].image.url as string
+    if (t === 'image' && b?.image?.url) return b.image.url as string
+    if (t === 'gallery' && Array.isArray(b?.images)) {
+      const first = b.images[0]
+      if (first?.image?.url) return first.image.url as string
+    }
   }
   return undefined
 }
@@ -38,59 +41,52 @@ function getPostDate(p?: Partial<Post>) {
  * Estilos inline para truncado multilinea a 2 renglones con ellipsis.
  * (Evita depender del plugin `line-clamp` de Tailwind.)
  */
-const twoLineClamp: React.CSSProperties = {
+const twoLineClamp: CSSProperties = {
   display: '-webkit-box',
   WebkitLineClamp: 2,
   WebkitBoxOrient: 'vertical',
   overflow: 'hidden',
 }
 
-export default function FeatureWithSidebarComponent() {
-  const [leftPost, setLeftPost] = useState<Post | null>(null)
-  const [rightPosts, setRightPosts] = useState<Post[]>([])
-  const [loading, setLoading] = useState(true)
+async function getFeatureData() {
+  const { isEnabled: draft } = await draftMode()
+  const payload = await getPayload({ config: configPromise })
 
-  useEffect(() => {
-    const run = async () => {
-      try {
-        const qs1 = new URLSearchParams({
-          'where[status][equals]': 'published',
-          depth: '2',
-          limit: '5',
-          sort: '-publishedAt',
-        })
-        let res = await fetch(`${API}/api/posts?${qs1.toString()}`, { cache: 'no-store' })
-        let data = await res.json()
-        let docs: Post[] = data?.docs || []
+  // 1) Intentar posts publicados ordenados por publishedAt desc
+  const res1 = await payload.find({
+    collection: 'posts',
+    draft,
+    depth: 2,
+    limit: 5,
+    sort: '-publishedAt',
+    overrideAccess: draft,
+    where: { status: { equals: 'published' } },
+  })
+  let docs = (res1.docs || []) as unknown as Post[]
 
-        if (!docs.length) {
-          const qs2 = new URLSearchParams({
-            depth: '2',
-            limit: '5',
-            sort: '-createdAt',
-          })
-          res = await fetch(`${API}/api/posts?${qs2.toString()}`, { cache: 'no-store' })
-          data = await res.json()
-          docs = data?.docs || []
-        }
+  // 2) Fallback a creados más recientes si no hay publicados
+  if (!docs.length) {
+    const res2 = await payload.find({
+      collection: 'posts',
+      draft,
+      depth: 2,
+      limit: 5,
+      sort: '-createdAt',
+      overrideAccess: draft,
+    })
+    docs = (res2.docs || []) as unknown as Post[]
+  }
 
-        if (docs.length) {
-          setLeftPost(docs[0])
-          setRightPosts(docs.slice(1, 5))
-        } else {
-          setLeftPost(null)
-          setRightPosts([])
-        }
-      } catch (e) {
-        console.error(e)
-      } finally {
-        setLoading(false)
-      }
-    }
-    run()
-  }, [])
+  const leftPost = docs[0] ?? null
+  const rightPosts = docs.slice(1, 5) ?? []
+  return { leftPost, rightPosts }
+}
 
-  if (loading) return null
+export default async function FeatureWithSidebarComponent() {
+  // Evita que Next lo cachee
+  noStore()
+
+  const { leftPost, rightPosts } = await getFeatureData()
   if (!leftPost) return null
 
   const leftTitle = leftPost.title
@@ -119,7 +115,7 @@ export default function FeatureWithSidebarComponent() {
                 </div>
               </div>
 
-              {/* Aplicamos truncado multilinea a 2 lineas */}
+              {/* Truncado multilinea a 2 líneas */}
               <h2
                 className="mt-4 font-extrabold leading-[1.02] text-[clamp(28px,3.2vw,56px)] text-[#0e1f28]"
                 style={twoLineClamp}
@@ -130,7 +126,7 @@ export default function FeatureWithSidebarComponent() {
             </Link>
           </div>
 
-          {/* Derecha: lista de 4 recientes (1/3 en md+, abajo en mobile) */}
+          {/* Derecha: lista de 4 recientes */}
           <aside className="md:col-span-1">
             <div className="flex flex-col gap-6">
               {rightPosts.map((post) => {
@@ -154,7 +150,6 @@ export default function FeatureWithSidebarComponent() {
                         Recientes
                       </div>
 
-                      {/* Título de la lista: máximo 2 renglones */}
                       <Link
                         href={href}
                         className="block max-w-[28ch] font-bold text-[#12313f] no-underline"
