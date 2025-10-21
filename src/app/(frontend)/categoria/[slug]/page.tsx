@@ -1,7 +1,13 @@
 import React from 'react'
 import { notFound } from 'next/navigation'
-import { getPayloadHMR } from '@payloadcms/next/utilities'
-import config from '@payload-config'
+import { getPayload } from 'payload'
+import payloadConfig from '@payload-config'
+import { draftMode } from 'next/headers'
+import { unstable_noStore as noStore } from 'next/cache'
+
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+export const runtime = 'nodejs'
 
 type PageProps = {
   params: Promise<{ slug: string }>
@@ -46,31 +52,60 @@ function extractTextFromLexical(node: any): string {
   return out.trim()
 }
 
+// Misma estructura que pediste: hero → (gallery primer item)
+function extractThumbFromBlocks(post?: { blocks?: any[] } | null): string | undefined {
+  const blocks = post?.blocks
+  if (!Array.isArray(blocks)) return undefined
+  for (const b of blocks) {
+    const t = b?.blockType
+    if (t === 'hero' && b?.image?.url) return b.image.url as string
+    if (t === 'gallery' && Array.isArray(b?.images)) {
+      const first = b.images[0]
+      if (first?.image?.url) return first.image.url as string
+    }
+    // continúa al siguiente bloque si no hubo match
+  }
+  return undefined
+}
+
 export default async function CategoryPage({ params }: PageProps) {
-  const payload = await getPayloadHMR({ config })
+  noStore()
+  const payload = await getPayload({ config: payloadConfig })
+  const { isEnabled: draft } = await draftMode()
   const { slug } = await params
 
   const page = 1
   const limit = 10
-  //const page = Math.max(parseInt(searchParams?.page || '1', 10) || 1, 1)
-  //const limit = Math.min(Math.max(parseInt(searchParams?.limit || '12', 10) || 12, 1), 48)
 
+  // Buscar categoría por slug
   const catRes = await payload.find({
     collection: 'categories',
     where: { slug: { equals: slug } },
     limit: 1,
     depth: 0,
+    draft,
+    overrideAccess: draft,
+    pagination: false,
   })
   if (!catRes.docs?.length) notFound()
   const category = catRes.docs[0] as any
 
+  // Posts por categoría (sin cache, SSR, con preview)
+  const where: any = { categories: { contains: category.id } }
+  if (!draft) {
+    // Filtrar a publicados cuando no es preview
+    where.status = { equals: 'published' }
+  }
+
   const postsRes = await payload.find({
     collection: 'posts',
-    where: { categories: { contains: category.id } },
+    where,
     sort: '-publishedAt',
-    depth: 1,
+    depth: 3, // traer Media en blocks
     limit,
     page,
+    draft,
+    overrideAccess: draft,
   })
 
   const { docs: posts, hasNextPage, hasPrevPage, totalDocs, totalPages } = postsRes
@@ -110,9 +145,15 @@ export default async function CategoryPage({ params }: PageProps) {
             {posts.map((post: any) => {
               const href = `/posts/${post.slug || post.id}`
 
+              // Primero: blocks (hero → gallery)
+              const imgFromBlocks = extractThumbFromBlocks(post)
+
+              // Fallbacks simples si no hay imagen en blocks
               const hero = post?.heroImage || post?.image || null
-              const imgUrl = hero?.url
-              const imgAlt = hero?.alt || post.title || 'Imagen'
+              const fallbackUrl = hero?.url
+
+              const imgUrl = imgFromBlocks || fallbackUrl
+              const imgAlt = (hero?.alt as string) || post.title || 'Imagen'
 
               const title = truncate(post.title || '', 80)
               const rawDesc =
@@ -130,8 +171,9 @@ export default async function CategoryPage({ params }: PageProps) {
                   className="border rounded-lg overflow-hidden hover:shadow-md transition bg-white flex flex-col"
                 >
                   {imgUrl && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={imgUrl} alt={imgAlt} className="w-full h-48 object-cover" />
+                    <a href={href}>
+                      <img src={imgUrl} alt={imgAlt} className="w-full h-48 object-cover" />
+                    </a>
                   )}
 
                   <div className="p-4 flex-1 flex flex-col">

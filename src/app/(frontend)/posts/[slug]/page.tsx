@@ -5,7 +5,6 @@ import ContentBlocks from '@/blocks/ContentBlocks/Component'
 import { getPayload } from 'payload'
 import payloadConfig from '@payload-config'
 import { draftMode } from 'next/headers'
-import { mediaUrl } from '@/utilities/mediaUrl'
 import { getMediaUrl } from '@/utilities/getMediaUrl'
 import { Category, Media, Post } from '@/payload-types'
 import { LivePreviewListener } from '@/components/LivePreviewListener'
@@ -17,7 +16,6 @@ export const revalidate = 60
 
 async function fetchPost(slug: string, depth = 2) {
   const { isEnabled: draft } = await draftMode()
-
   const payload = await getPayload({ config: payloadConfig })
 
   const result = await payload.find({
@@ -27,14 +25,57 @@ async function fetchPost(slug: string, depth = 2) {
     overrideAccess: draft,
     pagination: false,
     depth,
-    where: {
-      slug: {
-        equals: slug,
-      },
-    },
+    where: { slug: { equals: slug } },
   })
 
-  return result.docs?.[0] || null
+  return (result.docs?.[0] as Post) || null
+}
+
+async function fetchRelatedByCategories(post: Post, limit = 4) {
+  const { isEnabled: draft } = await draftMode()
+  const payload = await getPayload({ config: payloadConfig })
+
+  const categoryIds = (post.categories || [])
+    .map((c: any) => (typeof c === 'string' ? c : (c as Category)?.id))
+    .filter(Boolean) as string[]
+
+  if (!categoryIds.length) return [] as Post[]
+
+  const where: any = {
+    and: [
+      { id: { not_equals: post.id } },
+      { or: categoryIds.map((id) => ({ categories: { contains: id } })) },
+    ],
+  }
+  if (!draft) where.and.unshift({ status: { equals: 'published' } })
+
+  // 1) publishedAt desc
+  let res = await payload.find({
+    collection: 'posts',
+    draft,
+    depth: 3, // sube depth para traer Media dentro de blocks/seo
+    limit,
+    sort: '-publishedAt',
+    overrideAccess: draft,
+    where,
+  })
+  let docs = (res.docs || []) as Post[]
+
+  // 2) fallback createdAt desc
+  if (!docs.length) {
+    res = await payload.find({
+      collection: 'posts',
+      draft,
+      depth: 3, // mantener depth alto en fallback también
+      limit,
+      sort: '-createdAt',
+      overrideAccess: draft,
+      where,
+    })
+    docs = (res.docs || []) as Post[]
+  }
+
+  return docs
 }
 
 // ----------------- generateStaticParams -----------------
@@ -46,16 +87,10 @@ export async function generateStaticParams() {
     limit: 1000,
     overrideAccess: false,
     pagination: false,
-    select: {
-      slug: true,
-    },
+    select: { slug: true },
   })
 
-  const params = posts.docs.map(({ slug }) => {
-    return { slug }
-  })
-
-  return params
+  return posts.docs.map(({ slug }) => ({ slug }))
 }
 
 // ----------------- generateMetadata -----------------
@@ -64,9 +99,7 @@ type GenerateMetadataCtx = { params: Promise<{ slug: string }> }
 export async function generateMetadata({ params }: GenerateMetadataCtx): Promise<Metadata> {
   const { slug } = await params
   const post = await fetchPost(slug)
-  if (!post) {
-    return { title: 'No encontrado | Diario en Contexto' }
-  }
+  if (!post) return { title: 'No encontrado | Diario en Contexto' }
 
   const metaTitle = post.seo?.metaTitle || post.title
   const metaDescription = post.seo?.metaDescription || ''
@@ -78,20 +111,18 @@ export async function generateMetadata({ params }: GenerateMetadataCtx): Promise
   const ogImg = getMediaUrl((og.ogImage as Media)?.url)
   const twImg = getMediaUrl((tw.image as Media)?.url)
 
-  // Robots
   const robotsIndex = post.seo?.robotsIndex !== 'noindex'
   const robotsFollow = post.seo?.robotsFollow !== 'nofollow'
   const advanced = !!post.seo?.robotsAdvanced
 
   return {
-    metadataBase: new URL(process.env.NEXT_PUBLIC_SERVER_URL),
+    metadataBase: new URL(process.env.NEXT_PUBLIC_SERVER_URL!),
     title: metaTitle,
     description: metaDescription,
     alternates: { canonical },
     robots: {
       index: robotsIndex,
       follow: robotsFollow,
-      // “advanced” mapea a estas flags:
       nocache: undefined,
       noarchive: advanced || undefined,
       nosnippet: advanced || undefined,
@@ -113,8 +144,6 @@ export async function generateMetadata({ params }: GenerateMetadataCtx): Promise
       images: twImg ? [twImg] : undefined,
       creator: tw.creator || '',
     },
-    // keywords no es necesario para SEO moderno, pero si insistes:
-    // keywords: post.seo?.keywords,
   }
 }
 
@@ -127,8 +156,8 @@ export default async function PostPage({ params }: GenerateMetadataCtx) {
 
   const pubISO = post.publishedAt ? new Date(post.publishedAt).toISOString() : undefined
 
-  // JSON-LD (inyectado en el body)
-  const jsonldEnabled = post.seo?.jsonld?.enable !== false // por defecto true
+  // JSON-LD
+  const jsonldEnabled = post.seo?.jsonld?.enable !== false
   const jsonldType = post.seo?.jsonld?.type || 'NewsArticle'
   const jsonldImg = getPostImage(post)
 
@@ -143,7 +172,6 @@ export default async function PostPage({ params }: GenerateMetadataCtx) {
       }
     : null
 
-  // Protegemos blocks con fallback []
   const blocks = post.blocks ?? []
 
   // Bloque de relacionados (si existe)
@@ -153,11 +181,12 @@ export default async function PostPage({ params }: GenerateMetadataCtx) {
 
   const manualList = relatedBlock?.manual ?? []
 
-  const relatedDocs = (
+  // Resolver manuales con depth alto para tener imágenes
+  const relatedDocsManual = (
     await Promise.all(
       manualList.map(async (pp) => {
         if (isObj(pp)) {
-          const p = await fetchPost((pp as Post).slug!, 1)
+          const p = await fetchPost((pp as Post).slug!, 3)
           return p
         }
         return null
@@ -165,13 +194,19 @@ export default async function PostPage({ params }: GenerateMetadataCtx) {
     )
   ).filter((p): p is Post => Boolean(p))
 
+  // Fallback por categorías si no hay manuales
+  let relatedDocsFinal: Post[] = relatedDocsManual
+  if (!relatedDocsFinal.length) {
+    relatedDocsFinal = await fetchRelatedByCategories(post, 4)
+  }
+
   return (
     <main className="container mx-auto px-4 pt-24">
       {draft && <LivePreviewListener />}
 
-      <div className="grid grid-cols-3 gap-12">
-        <article itemScope itemType="https://schema.org/NewsArticle" className="col-span-2">
-          {/* Header “oculto” para accesibilidad/SEO si el Hero ya muestra el título */}
+      {/* Mobile: 1 col; Desktop: 3 cols (artículo ocupa 2) */}
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-3 md:gap-12">
+        <article itemScope itemType="https://schema.org/NewsArticle" className="md:col-span-2">
           <div className="sr-only">
             <h1 itemProp="headline">{post.title}</h1>
             {pubISO && <time itemProp="datePublished" dateTime={pubISO} />}
@@ -196,15 +231,15 @@ export default async function PostPage({ params }: GenerateMetadataCtx) {
           </div>
         </article>
 
-        {relatedDocs.length > 0 && (
+        {/* En mobile queda debajo del artículo */}
+        {relatedDocsFinal.length > 0 && (
           <div className="w-full flex flex-col gap-4">
             <h4 className="text-lg">Noticias relacionadas</h4>
-            <RelatedPosts docs={relatedDocs} />
+            <RelatedPosts docs={relatedDocsFinal} />
           </div>
         )}
       </div>
 
-      {/* JSON-LD */}
       {jsonld && (
         <script
           type="application/ld+json"

@@ -1,62 +1,72 @@
 import type { Metadata } from 'next/types'
+import React from 'react'
+import { getPayload } from 'payload'
+import configPromise from '@payload-config'
+import { draftMode } from 'next/headers'
+import { unstable_noStore as noStore } from 'next/cache'
 
 import { CollectionArchive } from '@/components/CollectionArchive'
-import configPromise from '@payload-config'
-import { getPayload } from 'payload'
-import React from 'react'
 import { Search } from '@/search/Component'
 import PageClient from './page.client'
-import { CardPostData } from '@/components/Card'
+
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+export const runtime = 'nodejs'
 
 type Args = {
   searchParams: Promise<{
-    q: string
+    q?: string
   }>
 }
+
 export default async function Page({ searchParams: searchParamsPromise }: Args) {
+  noStore()
   const { q: query } = await searchParamsPromise
+  const { isEnabled: draft } = await draftMode()
   const payload = await getPayload({ config: configPromise })
 
-  const posts = await payload.find({
-    collection: 'search',
-    depth: 1,
+  // Construye el where para buscar en posts (no en "search")
+  const where: any = query
+    ? {
+        or: [
+          { title: { like: query } },
+          { 'seo.metaDescription': { like: query } },
+          { 'seo.metaTitle': { like: query } },
+          { slug: { like: query } },
+        ],
+      }
+    : {}
+
+  // En producción (sin draftMode), filtra por publicados
+  if (!draft) {
+    where.and = Array.isArray(where.and) ? where.and : []
+    where.and.push({ status: { equals: 'published' } })
+  }
+
+  const postsRes = await payload.find({
+    collection: 'posts',
+    where,
+    // Trae campos necesarios para que tus tarjetas puedan extraer imagen desde blocks
+    depth: 3, // si aún no ves imágenes, sube a 4
     limit: 12,
+    sort: '-publishedAt',
+    draft,
+    overrideAccess: draft,
+    // pagination: false para menor overhead si no necesitas totalDocs
+    pagination: true,
     select: {
-      title: true,
+      id: true,
       slug: true,
+      title: true,
       categories: true,
-      meta: true,
+      seo: true,
+      blocks: true,
+      image: true,
+      heroImage: true,
+      // agrega otros campos si los usas en la tarjeta/listado
+      publishedAt: true,
+      createdAt: true,
     },
-    // pagination: false reduces overhead if you don't need totalDocs
-    pagination: false,
-    ...(query
-      ? {
-          where: {
-            or: [
-              {
-                title: {
-                  like: query,
-                },
-              },
-              {
-                'meta.description': {
-                  like: query,
-                },
-              },
-              {
-                'meta.title': {
-                  like: query,
-                },
-              },
-              {
-                slug: {
-                  like: query,
-                },
-              },
-            ],
-          },
-        }
-      : {}),
   })
 
   return (
@@ -72,8 +82,10 @@ export default async function Page({ searchParams: searchParamsPromise }: Args) 
         </div>
       </div>
 
-      {posts.totalDocs > 0 ? (
-        <CollectionArchive posts={posts.docs as any} />
+      {postsRes.totalDocs > 0 ? (
+        // Pásale los posts reales (no docs de "search") para que la Card/ PostCard
+        // pueda usar extractThumbFromBlocks en blocks.
+        <CollectionArchive posts={postsRes.docs as any} />
       ) : (
         <div className="container">No results found.</div>
       )}
