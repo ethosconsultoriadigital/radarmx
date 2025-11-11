@@ -84,7 +84,7 @@ export default async function Page({ searchParams: searchParamsPromise }: Args) 
 
       {postsRes.totalDocs > 0 ? (
         // Pásale los posts reales (no docs de "search") para que la Card/ PostCard
-        // pueda usar extractThumbFromBlocks en blocks.
+        // pueda usar extractThumbFromBlocks en blocks
         <CollectionArchive posts={postsRes.docs as any} />
       ) : (
         <div className="container">No results found.</div>
