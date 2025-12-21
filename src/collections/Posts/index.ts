@@ -174,8 +174,8 @@ export const Posts: CollectionConfig<'posts'> = {
     beforeValidate: [
       ({ operation, data }) => {
         if (operation === 'create') {
-          const preset = (data?.templatePreset || 'classic') as TemplateKey
-          if (data) {
+          const preset = data?.templatePreset as TemplateKey
+          if (data && preset) {
             data.blocks = TEMPLATES[preset]
           }
         }
