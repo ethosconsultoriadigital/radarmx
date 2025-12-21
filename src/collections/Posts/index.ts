@@ -76,7 +76,7 @@ const TEMPLATES: Record<TemplateKey, any[]> = {
 export const Posts: CollectionConfig<'posts'> = {
   slug: 'posts',
   access: {
-    create: authenticated,
+    create: () => true,
     delete: authenticated,
     read: authenticatedOrPublished,
     update: authenticated,
