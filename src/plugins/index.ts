@@ -95,7 +95,7 @@ export const plugins: Plugin[] = [
   }),
   payloadCloudPlugin(),
   gcsStorage({
-    enabled: true,
+    enabled: Boolean(process.env.GCS_BUCKET?.trim()),
     collections: {
       media: true,
     },
@@ -105,7 +105,7 @@ export const plugins: Plugin[] = [
       projectId: process.env.GCS_PROJECT_ID,
       credentials: {
         client_email: process.env.GCS_CLIENT_EMAIL,
-        private_key: process.env.GCS_PRIVATE_KEY!.replace(/\\n/g, '\n'),
+        private_key: (process.env.GCS_PRIVATE_KEY ?? '').replace(/\\n/g, '\n'),
       },
     },
     acl: 'Public',

@@ -1,21 +1,56 @@
-build
-dist / media
-node_modules
-.DS_Store
+# Dependencies
+node_modules/
+
+# Build / Next.js
+.next/
+out/
+build/
+dist/
+
+# Environment (nunca subas secretos)
 .env
-.next
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env*.local
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+
+# Vercel
 .vercel
 
-# Payload default media upload directory
+# Payload: medios locales si usas almacenamiento en disco
 public/media/
 
+# Sitemaps / robots generados en build
 public/robots.txt
 public/sitemap*.xml
 
+# Logs y coverage
+*.log
+npm-debug.log*
+pnpm-debug.log*
+coverage/
+.nyc_output/
 
-# Playwright
-node_modules/
+# Testing
 /test-results/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# TypeScript (build info; no ignorar next-env.d.ts — lo usa Next)
+*.tsbuildinfo
+
+# Claves locales
+*.pem
