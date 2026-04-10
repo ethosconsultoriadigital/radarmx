@@ -57,7 +57,7 @@ export default async function Page({ params: paramsPromise }: Args) {
   const { layout } = page
 
   return (
-    <main className="pt-4 pb-24">
+    <main className="pb-20 pt-8 md:pb-24 md:pt-12">
       <PageClient />
       {/* Allows redirects for valid pages too */}
       <PayloadRedirects disableNotFound url={url} />

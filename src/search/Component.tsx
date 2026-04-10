@@ -16,7 +16,7 @@ export const Search: React.FC = () => {
   }, [debouncedValue, router])
 
   return (
-    <div>
+    <div className="rounded-xl border border-border bg-card p-1 shadow-sm">
       <form
         onSubmit={(e) => {
           e.preventDefault()
@@ -27,6 +27,7 @@ export const Search: React.FC = () => {
         </Label>
         <Input
           id="search"
+          className="h-12 border-0 bg-transparent text-base shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 md:text-lg"
           onChange={(event) => {
             setValue(event.target.value)
           }}

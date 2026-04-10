@@ -201,11 +201,11 @@ export default async function PostPage({ params }: GenerateMetadataCtx) {
   }
 
   return (
-    <main className="container mx-auto px-4 pt-24">
+    <main className="container mx-auto px-4 pb-16 pt-12 md:pb-20 md:pt-16">
       {draft && <LivePreviewListener />}
 
       {/* Mobile: 1 col; Desktop: 3 cols (artículo ocupa 2) */}
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-3 md:gap-12">
+      <div className="grid grid-cols-1 gap-10 md:grid-cols-3 md:gap-12 lg:gap-16">
         <article itemScope itemType="https://schema.org/NewsArticle" className="md:col-span-2">
           <div className="sr-only">
             <h1 itemProp="headline">{post.title}</h1>
@@ -214,14 +214,17 @@ export default async function PostPage({ params }: GenerateMetadataCtx) {
 
           <ContentBlocks blocks={blocks.filter((r) => r.blockType !== 'relatedPosts')} />
 
-          <div className="mt-12 pb-12 border-t border-neutral-200 dark:border-neutral-800 pt-6 text-sm text-neutral-600 dark:text-neutral-400">
+          <div className="mt-12 border-t border-border pb-12 pt-6 text-sm text-muted-foreground">
             {post.categories?.length ? (
               <p className="mt-2">
                 Categorías{' '}
                 {(post.categories as unknown as Category[]).map((c, i) => (
                   <span key={c.id}>
                     {i > 0 ? ', ' : ''}
-                    <a href={`/categoria/${c.slug}`} className="underline hover:no-underline">
+                    <a
+                      href={`/categoria/${c.slug}`}
+                      className="font-medium text-primary underline-offset-2 transition-colors hover:text-primary/80 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+                    >
                       {c.title}
                     </a>
                   </span>
@@ -233,10 +236,12 @@ export default async function PostPage({ params }: GenerateMetadataCtx) {
 
         {/* En mobile queda debajo del artículo */}
         {relatedDocsFinal.length > 0 && (
-          <div className="w-full flex flex-col gap-4">
-            <h4 className="text-lg">Noticias relacionadas</h4>
+          <aside className="flex w-full flex-col gap-4 border-t border-border pt-8 md:border-t-0 md:pt-0">
+            <h2 className="font-serif text-lg font-semibold tracking-tight text-foreground md:text-xl">
+              Noticias relacionadas
+            </h2>
             <RelatedPosts docs={relatedDocsFinal} />
-          </div>
+          </aside>
         )}
       </div>
 

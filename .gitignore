@@ -54,3 +54,6 @@ coverage/
 
 # Claves locales
 *.pem
+
+# Backups de base de datos (volcados .sql; no subir datos de producción)
+/backups/*.sql

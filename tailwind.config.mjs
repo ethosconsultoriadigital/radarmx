@@ -30,19 +30,20 @@ const config = {
     container: {
       center: true,
       padding: {
-        '2xl': '2rem',
         DEFAULT: '1rem',
-        lg: '2rem',
-        md: '2rem',
         sm: '1rem',
+        md: '1.5rem',
+        lg: '2rem',
         xl: '2rem',
+        '2xl': '2rem',
       },
+      /* Un solo ancho máximo ~1170px desde xl (antes .container en globals) */
       screens: {
-        '2xl': '86rem',
-        lg: '64rem',
-        md: '48rem',
-        sm: '40rem',
-        xl: '80rem',
+        sm: '100%',
+        md: '100%',
+        lg: '100%',
+        xl: '1170px',
+        '2xl': '1170px',
       },
     },
     extend: {
@@ -93,9 +94,15 @@ const config = {
         error: 'hsl(var(--error))',
         warning: 'hsl(var(--warning))',
       },
+      boxShadow: {
+        card: '0 1px 2px 0 hsl(var(--foreground) / 0.04), 0 4px 16px -2px hsl(var(--foreground) / 0.08)',
+        'card-hover':
+          '0 4px 12px -2px hsl(var(--foreground) / 0.1), 0 8px 24px -4px hsl(var(--foreground) / 0.12)',
+      },
       fontFamily: {
-        mono: ['var(--font-geist-mono)'],
-        sans: ['var(--font-geist-sans)'],
+        mono: ['var(--font-geist-mono)', 'ui-monospace', 'monospace'],
+        sans: ['var(--font-geist-sans)', 'system-ui', 'sans-serif'],
+        serif: ['var(--font-frank)', 'Georgia', 'Cambria', 'Times New Roman', 'serif'],
       },
       keyframes: {
         'accordion-down': {
@@ -111,11 +118,36 @@ const config = {
         DEFAULT: {
           css: [
             {
-              '--tw-prose-body': 'var(--text)',
-              '--tw-prose-headings': 'var(--text)',
+              '--tw-prose-body': 'hsl(var(--foreground))',
+              '--tw-prose-headings': 'hsl(var(--foreground))',
+              '--tw-prose-links': 'hsl(var(--primary))',
+              '--tw-prose-bold': 'hsl(var(--foreground))',
+              '--tw-prose-quotes': 'hsl(var(--muted-foreground))',
+              maxWidth: '65ch',
+              lineHeight: '1.75',
               h1: {
-                fontWeight: 'normal',
-                marginBottom: '0.25em',
+                fontFamily: 'var(--font-frank), Georgia, serif',
+                fontWeight: '600',
+                letterSpacing: '-0.02em',
+                marginBottom: '0.35em',
+              },
+              h2: {
+                fontFamily: 'var(--font-frank), Georgia, serif',
+                fontWeight: '600',
+                letterSpacing: '-0.015em',
+              },
+              h3: {
+                fontFamily: 'var(--font-frank), Georgia, serif',
+                fontWeight: '600',
+              },
+              a: {
+                fontWeight: '500',
+                textDecoration: 'underline',
+                textDecorationThickness: '1px',
+                textUnderlineOffset: '2px',
+              },
+              'a:hover': {
+                color: 'hsl(var(--primary))',
               },
             },
           ],
@@ -124,10 +156,10 @@ const config = {
           css: [
             {
               h1: {
-                fontSize: '2.5rem',
+                fontSize: '2.25rem',
               },
               h2: {
-                fontSize: '1.25rem',
+                fontSize: '1.35rem',
                 fontWeight: 600,
               },
             },
@@ -137,7 +169,7 @@ const config = {
           css: [
             {
               h1: {
-                fontSize: '3.5rem',
+                fontSize: '2.75rem',
               },
               h2: {
                 fontSize: '1.5rem',

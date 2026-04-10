@@ -17,7 +17,6 @@ type Props = {
   title?: string
 }
 
-// Misma estructura solicitada: hero → (gallery primer item)
 function extractThumbFromBlocks(post?: { blocks?: any[] } | null): string | undefined {
   const blocks = post?.blocks
   if (!Array.isArray(blocks)) return undefined
@@ -44,7 +43,6 @@ export const Card: React.FC<Props> = (props) => {
   const sanitizedDescription = metaDescription?.replace(/\s/g, ' ')
   const href = `/${relationTo}/${slug}`
 
-  // Imagen desde blocks (hero → gallery) con fallback simple
   const imgFromBlocks = extractThumbFromBlocks(doc)
   const hero = (doc as any)?.heroImage || (doc as any)?.image || null
   const fallbackUrl = hero?.url
@@ -54,23 +52,33 @@ export const Card: React.FC<Props> = (props) => {
   return (
     <article
       className={cn(
-        'border border-border rounded-lg overflow-hidden bg-card hover:cursor-pointer min-w-[250px]',
+        'group flex min-h-full min-w-[250px] cursor-pointer flex-col overflow-hidden rounded-lg border border-border bg-card text-card-foreground shadow-card transition-shadow duration-200 hover:shadow-card-hover',
         className,
       )}
       ref={card.ref}
     >
-      <div className="relative w-full">
-        <img
-          src={imgUrl}
-          alt={imgAlt}
-          className="aspect-video w-full object-cover"
-          loading="lazy"
-        />
-      </div>
+      <Link
+        href={href}
+        className="relative block w-full overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+      >
+        {imgUrl ? (
+          <img
+            src={imgUrl}
+            alt={imgAlt}
+            className="aspect-[16/10] w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+            loading="lazy"
+          />
+        ) : (
+          <div
+            className="aspect-[16/10] w-full bg-gradient-to-br from-muted to-muted/60"
+            aria-hidden
+          />
+        )}
+      </Link>
 
-      <div className="p-4">
+      <div className="flex flex-1 flex-col p-4 md:p-5">
         {showCategories && hasCategories && (
-          <div className="uppercase text-sm mb-4">
+          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-primary">
             <div>
               {categories?.map((category, index) => {
                 if (typeof category === 'object' && category) {
@@ -90,19 +98,21 @@ export const Card: React.FC<Props> = (props) => {
         )}
 
         {titleToUse && (
-          <div className="prose">
-            <h3>
-              <Link className="not-prose" href={href} ref={link.ref}>
-                {titleToUse}
-              </Link>
-            </h3>
-          </div>
+          <h3 className="font-serif text-lg font-semibold leading-snug tracking-tight text-foreground md:text-xl">
+            <Link
+              className="not-prose text-inherit no-underline transition-colors hover:text-primary"
+              href={href}
+              ref={link.ref}
+            >
+              {titleToUse}
+            </Link>
+          </h3>
         )}
 
         {metaDescription && (
-          <div className="mt-2">
-            <p>{sanitizedDescription}</p>
-          </div>
+          <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-muted-foreground">
+            {sanitizedDescription}
+          </p>
         )}
       </div>
     </article>

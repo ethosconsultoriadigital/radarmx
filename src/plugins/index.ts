@@ -18,7 +18,7 @@ import { getServerSideURL } from '@/utilities/getURL'
 // deploy
 
 const generateTitle: GenerateTitle<Post | Page> = ({ doc }) => {
-  return doc?.title ? `${doc.title} | Payload Website Template` : 'Payload Website Template'
+  return doc?.title ? `${doc.title} | Radar Mex` : 'Radar Mex'
 }
 
 const generateURL: GenerateURL<Post | Page> = ({ doc }) => {

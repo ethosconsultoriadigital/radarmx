@@ -128,20 +128,24 @@ export default async function CategoryPage({ params }: PageProps) {
       : null
 
   return (
-    <main className="container py-10">
-      <header className="mb-8">
-        <h1 className="text-3xl font-semibold">Categoría: {category.title}</h1>
-        <p className="text-sm text-gray-600 mt-2">
+    <main className="container py-10 pb-16 md:py-14">
+      <header className="mb-10 border-b border-border pb-8">
+        <h1 className="font-serif text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
+          Categoría: {category.title}
+        </h1>
+        <p className="mt-3 text-sm text-muted-foreground">
           {totalDocs} resultado{totalDocs === 1 ? '' : 's'}
           {totalPages > 1 && ` • Página ${page} de ${totalPages}`}
         </p>
       </header>
 
       {posts.length === 0 ? (
-        <p className="text-gray-600">No hay publicaciones en esta categoría.</p>
+        <p className="rounded-lg border border-dashed border-border bg-muted/30 px-4 py-8 text-center text-muted-foreground">
+          No hay publicaciones en esta categoría.
+        </p>
       ) : (
         <>
-          <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
             {posts.map((post: any) => {
               const href = `/posts/${post.slug || post.id}`
 
@@ -168,28 +172,32 @@ export default async function CategoryPage({ params }: PageProps) {
               return (
                 <li
                   key={post.id}
-                  className="border rounded-lg overflow-hidden hover:shadow-md transition bg-white flex flex-col"
+                  className="group flex flex-col overflow-hidden rounded-lg border border-border bg-card text-card-foreground shadow-card transition-shadow hover:shadow-card-hover"
                 >
                   {imgUrl && (
-                    <a href={href}>
-                      <img src={imgUrl} alt={imgAlt} className="w-full h-48 object-cover" />
+                    <a href={href} className="block overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                      <img
+                        src={imgUrl}
+                        alt={imgAlt}
+                        className="h-48 w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                      />
                     </a>
                   )}
 
-                  <div className="p-4 flex-1 flex flex-col">
+                  <div className="flex flex-1 flex-col p-4 md:p-5">
                     <a
                       href={href}
-                      className="text-lg font-semibold hover:text-red-600 line-clamp-2"
+                      className="line-clamp-2 font-serif text-lg font-semibold text-foreground transition-colors hover:text-primary"
                     >
                       {title}
                     </a>
 
                     {published && (
-                      <p className="mt-1 text-xs text-gray-500">Publicado: {published}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">Publicado: {published}</p>
                     )}
 
                     {description && (
-                      <p className="mt-2 text-sm text-gray-700 line-clamp-3">{description}</p>
+                      <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">{description}</p>
                     )}
 
                     {Array.isArray(post.tags) && post.tags.length > 0 && (
@@ -197,7 +205,7 @@ export default async function CategoryPage({ params }: PageProps) {
                         {post.tags.map((t: string) => (
                           <span
                             key={t}
-                            className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded"
+                            className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
                           >
                             #{t}
                           </span>
@@ -211,26 +219,33 @@ export default async function CategoryPage({ params }: PageProps) {
           </ul>
 
           {totalPages > 1 && (
-            <nav className="mt-10 flex items-center justify-center gap-3">
+            <nav
+              className="mt-10 flex flex-wrap items-center justify-center gap-3"
+              aria-label="Paginación"
+            >
               <a
                 aria-disabled={!hasPrevPage}
                 href={hasPrevPage ? buildPageHref(page - 1) : undefined}
-                className={`px-4 py-2 border rounded ${
-                  hasPrevPage ? 'hover:bg-gray-50' : 'opacity-50 cursor-not-allowed'
+                className={`rounded-md border border-border bg-card px-4 py-2 text-sm font-medium transition-colors ${
+                  hasPrevPage
+                    ? 'text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+                    : 'cursor-not-allowed opacity-50'
                 }`}
               >
                 ← Anterior
               </a>
 
-              <span className="text-sm text-gray-600">
+              <span className="text-sm text-muted-foreground">
                 Página {page} de {totalPages}
               </span>
 
               <a
                 aria-disabled={!hasNextPage}
                 href={hasNextPage ? buildPageHref(page + 1) : undefined}
-                className={`px-4 py-2 border rounded ${
-                  hasNextPage ? 'hover:bg-gray-50' : 'opacity-50 cursor-not-allowed'
+                className={`rounded-md border border-border bg-card px-4 py-2 text-sm font-medium transition-colors ${
+                  hasNextPage
+                    ? 'text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+                    : 'cursor-not-allowed opacity-50'
                 }`}
               >
                 Siguiente →

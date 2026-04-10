@@ -1,5 +1,4 @@
 import { HeroBlockT, Media } from '@/payload-types'
-import { getMediaUrl } from '@/utilities/getMediaUrl'
 import { isObj } from '@/utilities/isObj'
 import { mediaUrl } from '@/utilities/mediaUrl'
 import clsx from 'clsx'
@@ -20,7 +19,7 @@ export function HeroBlock(props: HeroBlockT) {
   return (
     <header
       className={clsx(
-        'relative w-full mb-8 rounded-2xl overflow-hidden',
+        'relative mb-10 w-full overflow-hidden rounded-xl border border-border shadow-card md:rounded-2xl',
         mediaType === 'image' ? 'aspect-[16/9]' : '',
       )}
       aria-label="Cabecera de la nota"
@@ -68,26 +67,40 @@ export function HeroBlock(props: HeroBlockT) {
       {/* Overlay y texto */}
       <div
         className={clsx(
-          'absolute inset-0 p-6 md:p-10 flex',
+          'absolute inset-0 flex p-6 md:p-10',
           align === 'center'
             ? 'items-center justify-center text-center'
             : 'items-end justify-start',
           darkOverlay
-            ? 'bg-gradient-to-t from-black/60 via-black/20 to-transparent text-white'
-            : '',
+            ? 'bg-gradient-to-t from-black/70 via-black/30 to-transparent text-white'
+            : 'bg-gradient-to-t from-background/95 via-background/55 to-transparent text-foreground dark:from-background/90',
         )}
       >
-        <div className="max-w-4xl w-full">
+        <div className="w-full max-w-4xl">
           {overline && (
             <p
-              className="uppercase tracking-wider text-sm md:text-base opacity-90"
+              className={clsx(
+                'text-sm uppercase tracking-wider md:text-base',
+                darkOverlay ? 'text-white/90' : 'text-primary',
+              )}
               aria-label="Sección"
             >
               {overline}
             </p>
           )}
-          <h1 className="text-3xl md:text-5xl font-extrabold leading-tight">{title}</h1>
-          {subtitle && <p className="mt-3 text-base md:text-lg opacity-95">{subtitle}</p>}
+          <h1 className="font-serif text-3xl font-bold leading-tight tracking-tight md:text-5xl">
+            {title}
+          </h1>
+          {subtitle && (
+            <p
+              className={clsx(
+                'mt-3 text-base md:text-lg',
+                darkOverlay ? 'text-white/95' : 'text-muted-foreground',
+              )}
+            >
+              {subtitle}
+            </p>
+          )}
         </div>
       </div>
     </header>

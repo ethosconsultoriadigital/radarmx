@@ -28,16 +28,19 @@ export default async function Page() {
   })
 
   return (
-    <main className="pt-24 pb-24">
+    <main className="pb-20 pt-12 md:pb-24 md:pt-16">
       <PageClient />
-      <div className="container mb-16">
-        <div className="prose dark:prose-invert max-w-none">
-          <h1>Posts</h1>
+      <div className="container mb-10 border-b border-border pb-10 md:mb-12 md:pb-12">
+        <div className="prose prose-neutral max-w-none dark:prose-invert">
+          <h1 className="mb-0 font-serif text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
+            Posts
+          </h1>
         </div>
       </div>
 
       <div className="container mb-8">
         <PageRange
+          className="text-sm text-muted-foreground"
           collection="posts"
           currentPage={posts.page}
           limit={12}
@@ -58,6 +61,6 @@ export default async function Page() {
 
 export function generateMetadata(): Metadata {
   return {
-    title: `Payload Website Template Posts`,
+    title: `Posts | Radar Mex`,
   }
 }

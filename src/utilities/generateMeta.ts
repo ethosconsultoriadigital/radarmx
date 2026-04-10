@@ -55,7 +55,7 @@ export const generateMeta = async (args: { doc: Doc }): Promise<Metadata> => {
   const { title: metaTitle, description, image } = normalizeMeta(doc)
   const ogImage = getImageURL(image ?? null)
 
-  const title = metaTitle ? `${metaTitle} | Payload Website Template` : 'Payload Website Template'
+  const title = metaTitle ? `${metaTitle} | Radar Mex` : 'Radar Mex'
 
   // Construye la URL canónica relativa de forma segura
   const path =

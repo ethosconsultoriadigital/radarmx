@@ -4,7 +4,6 @@ import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import type { Header as HeaderType } from '@/payload-types'
-import { CMSLink } from '@/components/Link'
 import clsx from 'clsx'
 import { SearchIcon } from 'lucide-react'
 
@@ -13,15 +12,17 @@ export const HeaderNav: React.FC<{
   categories?: { id: string; title: string; slug?: string }[]
   showSearch?: boolean
 }> = ({ data, categories = [], showSearch = true }) => {
-  const navItems = data?.navItems || []
+  void data?.navItems
   const pathname = usePathname()
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/')
 
   const linkClass = (active?: boolean) =>
     clsx(
-      'text-md transition-colors',
-      active ? 'text-red-600 font-semibold' : 'text-gray-800 hover:text-red-600',
+      'text-sm md:text-base font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm',
+      active
+        ? 'text-primary font-semibold'
+        : 'text-foreground/85 hover:text-primary',
     )
 
   return (
@@ -56,10 +57,10 @@ export const HeaderNav: React.FC<{
       {showSearch && (
         <Link
           href="/search"
-          className="inline-flex items-center p-1 rounded-md text-gray-700 hover:text-red-600"
+          className="inline-flex items-center rounded-md p-2 text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           <span className="sr-only">Buscar</span>
-          <SearchIcon className="w-5 h-5" />
+          <SearchIcon className="h-5 w-5" aria-hidden />
         </Link>
       )}
     </nav>

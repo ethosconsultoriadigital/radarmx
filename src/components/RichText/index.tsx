@@ -1,4 +1,3 @@
-import { MediaBlock } from '@/blocks/MediaBlock/Component'
 import {
   DefaultNodeTypes,
   SerializedBlockNode,
@@ -12,7 +11,6 @@ import {
 } from '@payloadcms/richtext-lexical/react'
 
 import { CodeBlock, CodeBlockProps } from '@/blocks/Code/Component'
-import { CallToActionBlock } from '@/blocks/CallToAction/Component'
 import { cn } from '@/utilities/ui'
 
 type NodeTypes = DefaultNodeTypes | SerializedBlockNode<CodeBlockProps>
@@ -50,7 +48,8 @@ export default function RichText(props: Props) {
         {
           container: enableGutter,
           'max-w-none': !enableGutter,
-          'mx-auto prose md:prose-md dark:prose-invert': enableProse,
+          'prose prose-neutral mx-auto max-w-[65ch] md:prose-md dark:prose-invert prose-headings:font-serif prose-a:text-primary prose-img:rounded-lg':
+            enableProse,
         },
         className,
       )}

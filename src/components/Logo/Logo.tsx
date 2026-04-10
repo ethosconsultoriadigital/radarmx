@@ -16,14 +16,17 @@ export const Logo = (props: Props) => {
   return (
     /* eslint-disable @next/next/no-img-element */
     <img
-      alt="Payload Logo"
-      width={193}
-      height={34}
+      alt="RadarMex"
+      width={180}
+      height={48}
       loading={loading}
       fetchPriority={priority}
       decoding="async"
-      className={clsx('max-w-[9.375rem] w-full h-[34px]', className)}
-      src="/logo.webp"
+      className={clsx(
+        'h-9 w-auto max-w-[12rem] object-contain object-left md:h-10',
+        className,
+      )}
+      src="/radarmex_profile.png"
     />
   )
 }

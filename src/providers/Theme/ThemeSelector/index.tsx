@@ -53,8 +53,8 @@ export const ThemeSelector: React.FC = () => {
   return (
     <Select onValueChange={onThemeChange} value={value}>
       <SelectTrigger
-        aria-label="Select a theme"
-        className="w-auto bg-transparent gap-2 pl-0 md:pl-3 border-none"
+        aria-label="Tema de la interfaz"
+        className="h-9 w-auto min-w-[7.5rem] gap-2 rounded-md border border-border bg-background px-3 text-sm text-foreground shadow-sm transition-colors hover:bg-muted/60 focus:ring-2 focus:ring-ring focus:ring-offset-2"
       >
         <SelectValue placeholder="Theme" />
       </SelectTrigger>

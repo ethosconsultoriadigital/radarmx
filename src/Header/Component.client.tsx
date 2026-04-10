@@ -55,15 +55,18 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
   }, [mobileOpen])
 
   return (
-    <div className="border-b border-solid">
+    <div className="border-b border-border bg-background/90 shadow-sm shadow-foreground/5 backdrop-blur-md supports-[backdrop-filter]:bg-background/75">
       <header
         className="container relative z-30"
         {...(theme ? { 'data-theme': theme } : {})}
         role="banner"
       >
-        <div className="py-4 md:py-8 flex items-center justify-between gap-6">
+        <div className="flex items-center justify-between gap-4 py-4 md:gap-6 md:py-6">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-3">
+          <Link
+            href="/"
+            className="flex shrink-0 items-center gap-3 rounded-sm transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
             <span className="sr-only">Inicio</span>
             <Logo loading="eager" priority="high" />
           </Link>
@@ -77,10 +80,10 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
           <div className="hidden md:flex items-center gap-4">
             <Link
               href="/search"
-              className="inline-flex items-center p-1 rounded-md text-gray-700 hover:text-red-600"
+              className="inline-flex items-center rounded-md p-2 text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <span className="sr-only">Buscar</span>
-              <SearchIcon className="w-5 h-5" />
+              <SearchIcon className="h-5 w-5" aria-hidden />
             </Link>
           </div>
 
@@ -91,7 +94,7 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
               aria-controls="mobile-navigation"
               aria-expanded={mobileOpen}
               onClick={() => setMobileOpen((s) => !s)}
-              className="inline-flex items-center justify-center rounded-md p-2 bg-white/90 shadow-sm border border-gray-200"
+              className="inline-flex items-center justify-center rounded-md border border-border bg-card p-2 text-foreground shadow-sm transition-colors hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               {mobileOpen ? (
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -131,25 +134,25 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
         <div
           onClick={() => setMobileOpen(false)}
           className={clsx(
-            'absolute inset-0 bg-black/40 transition-opacity',
+            'absolute inset-0 bg-foreground/25 transition-opacity dark:bg-foreground/40',
             mobileOpen ? 'opacity-100' : 'opacity-0',
           )}
         />
         <div
           className={clsx(
-            'absolute right-0 top-0 h-full w-full max-w-xs bg-white shadow-lg transform transition-transform duration-200',
+            'absolute right-0 top-0 h-full w-full max-w-xs transform border-l border-border bg-card text-card-foreground shadow-xl transition-transform duration-200',
             mobileOpen ? 'translate-x-0' : 'translate-x-full',
           )}
         >
           <div className="h-full flex flex-col">
-            <div className="px-4 py-4 flex items-center justify-between border-b">
+            <div className="flex items-center justify-between border-b border-border px-4 py-4">
               <Link href="/">
                 <Logo />
               </Link>
               <button
                 onClick={() => setMobileOpen(false)}
                 aria-label="Cerrar menú"
-                className="p-2 rounded-md"
+                className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
                   <path
@@ -167,7 +170,7 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
               {/* Categorías (móvil) */}
               {categories.length > 0 && (
                 <div className="mb-4">
-                  <div className="text-xs font-semibold text-gray-500 uppercase mb-2">
+                  <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Categorías
                   </div>
                   <ul className="flex flex-col gap-2">
@@ -178,7 +181,7 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
                           <Link
                             href={href}
                             onClick={() => setMobileOpen(false)}
-                            className="block px-2 py-2 rounded-md text-gray-800 hover:bg-gray-50"
+                            className="block rounded-md px-2 py-2 text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                           >
                             {cat.title}
                           </Link>
@@ -191,11 +194,13 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
 
               {/* Nav completo (móvil) */}
               <div className="mb-4">
-                <div className="text-xs font-semibold text-gray-500 uppercase mb-2">Navegación</div>
+                <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Navegación
+                </div>
                 <HeaderNav data={data} showSearch={true} />
               </div>
 
-              <div className="mt-auto pt-4 text-sm text-gray-500">
+              <div className="mt-auto border-t border-border pt-4 text-sm text-muted-foreground">
                 © {new Date().getFullYear()}
               </div>
             </div>

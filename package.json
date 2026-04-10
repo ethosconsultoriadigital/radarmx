@@ -1,7 +1,7 @@
 {
-  "name": "encontexto-payload",
+  "name": "radarmex",
   "version": "1.0.0",
-  "description": "Website template for Payload",
+  "description": "Radar Mex — sitio editorial con Payload CMS",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -19,7 +19,10 @@
     "start": "cross-env NODE_OPTIONS=--no-deprecation next start",
     "test": "pnpm run test:int && pnpm run test:e2e",
     "test:e2e": "cross-env NODE_OPTIONS=\"--no-deprecation --no-experimental-strip-types\" pnpm exec playwright test --config=playwright.config.ts",
-    "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts"
+    "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts",
+    "db:dump-neon": "node scripts/neon-to-local.mjs --dump-only",
+    "db:restore-local": "node scripts/neon-to-local.mjs --restore-only",
+    "db:sync-neon": "node scripts/neon-to-local.mjs"
   },
   "dependencies": {
     "@payloadcms/admin-bar": "^3.56.0",

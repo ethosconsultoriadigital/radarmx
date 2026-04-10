@@ -4,6 +4,8 @@ import { unstable_noStore as noStore } from 'next/cache'
 import { getPayload } from 'payload'
 import configPromise from '@payload-config'
 
+import { cn } from '@/utilities/ui'
+
 type Media = { url?: string; alt?: string }
 type Category = { id: string; title?: string; slug?: string; color?: string }
 type PostDoc = {
@@ -175,58 +177,62 @@ export default async function HomeHighlights() {
   return (
     <section
       aria-label={cfg.title || 'Recientes'}
-      style={{
-        position: 'relative',
-        overflow: 'hidden',
-        borderRadius: 8,
-        background: bgUrl
-          ? `url(${bgUrl}) center/cover no-repeat`
-          : 'linear-gradient(180deg, rgba(141,211,232,0.45) 0%, rgba(207,230,240,0.55) 100%)',
-      }}
+      className={cn(
+        'relative overflow-hidden rounded-b-lg border-x border-b border-border/60',
+        !bgUrl &&
+          'bg-gradient-to-br from-primary/[0.07] via-muted/60 to-accent/25 dark:from-primary/15 dark:via-card/80 dark:to-background',
+      )}
+      style={
+        bgUrl
+          ? {
+              backgroundImage: `url(${bgUrl})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }
+          : undefined
+      }
     >
-      <div
-        style={{
-          backdropFilter: 'saturate(120%) blur(1px)',
-          background:
-            'linear-gradient(180deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.15) 100%)',
-        }}
-      >
-        <div className="mx-auto max-w-none md:max-w-[1220px] px-4 py-7">
-          <div className="flex flex-col gap-8 md:grid md:grid-cols-4 md:gap-8 md:items-center">
+      <div className="bg-gradient-to-b from-background/90 via-background/78 to-background/92 backdrop-blur-[1px] dark:from-background/95 dark:via-background/88 dark:to-background">
+        <div className="container py-8 md:py-10">
+          <div className="flex flex-col gap-8 md:grid md:grid-cols-4 md:items-start md:gap-8">
             {items.slice(0, 4).map((item, idx) => {
-              if (!item) return <div key={idx} className="h-[72px]" />
+              if (!item) return <div key={idx} className="min-h-[72px]" aria-hidden />
 
               const { post, category, thumb, date } = item
               const catSlug = category?.slug || (category?.id ? String(category.id) : '')
               const href = catSlug ? `/${catSlug}/${post.slug}` : `/posts/${post.slug}`
+              const catColor = category?.color
 
               return (
                 <article
                   key={`${post.id}-${idx}`}
-                  className="flex items-start gap-4 md:flex-row md:items-center md:gap-4"
+                  className="flex items-start gap-4 transition-colors md:gap-4"
                 >
                   <Link
                     href={href}
-                    className="inline-block shrink-0 overflow-hidden rounded-full shadow-[0_4px_14px_rgba(0,0,0,0.15)] w-[72px] h-[72px]"
+                    className="inline-block h-[72px] w-[72px] shrink-0 overflow-hidden rounded-full bg-muted ring-2 ring-border/70 shadow-card transition-shadow hover:shadow-card-hover"
                   >
                     <img
                       src={thumb}
-                      alt={post.title}
+                      alt=""
+                      role="presentation"
                       width={72}
                       height={72}
                       className="h-full w-full object-cover"
                     />
                   </Link>
 
-                  <div className="min-w-0">
-                    <div className="mb-1 text-[11px] tracking-[0.3px] text-[#6c8b9a] uppercase font-semibold">
-                      Recientes
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      {cfg.title || 'Recientes'}
                       {category?.title ? (
                         <>
-                          <span className="mx-[6px]">·</span>
+                          <span className="mx-1.5 text-muted-foreground/70" aria-hidden>
+                            ·
+                          </span>
                           <span
-                            className="text-[#4f8ea3]"
-                            style={{ color: category.color || '#4f8ea3' }}
+                            className={cn(!catColor && 'text-primary')}
+                            style={catColor ? { color: catColor } : undefined}
                           >
                             {category.title}
                           </span>
@@ -237,12 +243,12 @@ export default async function HomeHighlights() {
                     <Link
                       href={href}
                       title={post.title}
-                      className="block text-[#12313f] font-bold no-underline truncate max-w-[28ch]"
+                      className="block max-w-[32ch] truncate font-serif text-base font-bold text-foreground no-underline transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     >
                       {post.title}
                     </Link>
 
-                    <div className="mt-1 text-xs text-[#6b7b85]">
+                    <div className="mt-1 text-xs text-muted-foreground">
                       {date
                         ? new Date(date).toLocaleDateString('es-MX', {
                             day: '2-digit',

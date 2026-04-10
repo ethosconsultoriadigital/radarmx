@@ -17,21 +17,21 @@ import './globals.css'
 
 const frank = Frank_Ruhl_Libre({
   subsets: ['latin'],
+  variable: '--font-frank',
+  display: 'swap',
 })
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
-      className={cn(frank.className, GeistSans.variable, GeistMono.variable)}
-      lang="en"
+      className={cn(frank.variable, GeistSans.variable, GeistMono.variable)}
+      lang="es"
       suppressHydrationWarning
     >
       <head>
         <InitTheme />
-        <link href="/favicon.ico" rel="icon" sizes="32x32" />
-        <link href="/favicon.svg" rel="icon" type="image/svg+xml" />
       </head>
-      <body>
+      <body className="font-sans">
         <Providers>
           <Header />
           <HomeHighlights />
@@ -45,6 +45,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
 export const metadata: Metadata = {
   metadataBase: new URL(getServerSideURL()),
+  icons: {
+    icon: [{ url: '/logo.favico.ico', type: 'image/x-icon', sizes: 'any' }],
+  },
   openGraph: mergeOpenGraph(),
   twitter: {
     card: 'summary_large_image',

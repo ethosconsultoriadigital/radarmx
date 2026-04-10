@@ -27,13 +27,13 @@ const maxWidthClass = (mw?: RowBlock['maxWidth']) => {
 const backgroundClass = (bg?: RowBlock['background']) => {
   switch (bg) {
     case 'white':
-      return 'bg-white dark:bg-neutral-900'
+      return 'bg-card text-card-foreground'
     case 'neutral-900':
-      return 'bg-neutral-900 text-white'
+      return 'bg-foreground text-background'
     case 'zinc-50':
-      return 'bg-zinc-50 dark:bg-neutral-950'
+      return 'bg-muted/80 text-foreground'
     case 'panel':
-      return 'bg-white/60 dark:bg-neutral-900/60 backdrop-blur border border-gray-200 dark:border-neutral-800 rounded-2xl'
+      return 'rounded-2xl border border-border bg-card/80 text-card-foreground shadow-card backdrop-blur-md'
     default:
       return ''
   }
@@ -88,7 +88,7 @@ export function RowView(props: RowBlock) {
         backgroundClass(background),
         paddingY,
         className,
-        'h-full max-w-[1170px] mx-auto',
+        'mx-auto h-full max-w-[1170px]',
       )}
     >
       <Wrapper {...wrapperProps}>
