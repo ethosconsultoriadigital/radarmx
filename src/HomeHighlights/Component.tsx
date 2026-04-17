@@ -7,7 +7,6 @@ import configPromise from '@payload-config'
 import { cn } from '@/utilities/ui'
 
 type Media = { url?: string; alt?: string }
-type Category = { id: string; title?: string; slug?: string; color?: string }
 type PostDoc = {
   id: string
   title: string
@@ -18,27 +17,14 @@ type PostDoc = {
   updatedAt?: string
   publishDate?: string
   date?: string
-  categories?: (Category | string)[]
   blocks?: any[]
 }
 
-type ColumnCfg = {
-  mode: 'latestByCategory' | 'manualPost'
-  category?: Category | string
-  post?: PostDoc | string
-  dateOverride?: string
+type GlobalCfg = {
+  title?: string | null
+  background?: Media | string | number | null
+  count?: number | null
 }
-
-type GlobalConfig = {
-  title?: string
-  background?: Media | string
-  columns?: ColumnCfg[]
-}
-
-// Si quieres forzar esto a SSR desde el segmento (page/layout), añade allí:
-// export const dynamic = 'force-dynamic'
-// export const revalidate = 0
-// export const runtime = 'nodejs'
 
 function extractThumbFromBlocks(blocks?: any[]): string | undefined {
   if (!Array.isArray(blocks)) return undefined
@@ -65,118 +51,61 @@ function getPostDate(post?: Partial<PostDoc>): string | undefined {
   )
 }
 
-async function getHomeHighlightsData() {
+async function getRecentPosts(): Promise<{
+  title: string
+  bgUrl?: string
+  posts: PostDoc[]
+}> {
   const { isEnabled: draft } = await draftMode()
   const payload = await getPayload({ config: configPromise })
 
-  // Lee el global con depth=2 para resolver relaciones
   const g = (await payload.findGlobal({
     slug: 'home-highlights',
     depth: 2,
     draft,
-  })) as GlobalConfig | null
+  })) as GlobalCfg | null
 
-  const cfg: GlobalConfig | null = g ?? null
-  const cols = (cfg?.columns || []).slice(0, 4)
+  const title = (g?.title ?? 'Recientes').trim() || 'Recientes'
+  const rawCount = typeof g?.count === 'number' ? g.count : 4
+  const count = Math.min(4, Math.max(2, rawCount))
 
-  const items: { post: PostDoc; category?: Category; thumb?: string; date?: string }[] = []
-
-  for (const col of cols) {
-    if (!col) {
-      items.push(undefined as any)
-      continue
-    }
-
-    // Modo: post manual
-    if (col.mode === 'manualPost' && col.post) {
-      let post: PostDoc | null = null
-
-      if (typeof col.post === 'object') {
-        post = col.post as PostDoc
-      } else {
-        // Si vino como ID
-        try {
-          const byId = await payload.findByID({
-            collection: 'posts',
-            id: String(col.post),
-            draft,
-            depth: 2,
-          })
-          post = byId as unknown as PostDoc
-        } catch {
-          post = null
-        }
-      }
-
-      if (post) {
-        const cat =
-          (Array.isArray(post.categories) && (post.categories[0] as Category)) || undefined
-        const thumb = extractThumbFromBlocks(post.blocks) || '/placeholder.jpg'
-        const date = col.dateOverride || getPostDate(post)
-        items.push({ post, category: cat, thumb, date })
-      } else {
-        items.push(undefined as any)
-      }
-      continue
-    }
-
-    // Modo: último por categoría
-    if (col.mode === 'latestByCategory' && col.category) {
-      const catId =
-        typeof col.category === 'object' ? (col.category as Category).id : String(col.category)
-
-      // Filtra por status publicado y categoría
-      const res = await payload.find({
-        collection: 'posts',
-        draft,
-        depth: 2,
-        limit: 1,
-        sort: '-publishedAt',
-        where: {
-          and: [
-            { status: { equals: 'published' } },
-            // Para relaciones (array), equals suele funcionar; si tu schema requiere, cambia a { in: [catId] }
-            { categories: { equals: catId } },
-          ],
-        },
-      })
-
-      const post = res.docs?.[0] as unknown as PostDoc | undefined
-      if (post) {
-        const cat = typeof col.category === 'object' ? (col.category as Category) : undefined
-        const thumb = extractThumbFromBlocks(post.blocks) || '/placeholder.jpg'
-        const date = col.dateOverride || getPostDate(post)
-        items.push({ post, category: cat, thumb, date })
-      } else {
-        items.push(undefined as any)
-      }
-      continue
-    }
-
-    items.push(undefined as any)
-  }
-
-  while (items.length < 4) items.push(undefined as any)
-
-  // Background
   let bgUrl: string | undefined
-  if (cfg?.background && typeof cfg.background === 'object') {
-    bgUrl = (cfg.background as Media).url
+  if (g?.background && typeof g.background === 'object') {
+    bgUrl = (g.background as Media).url
   }
 
-  return { cfg, items, bgUrl }
+  const res = await payload.find({
+    collection: 'posts',
+    draft,
+    depth: 2,
+    limit: count,
+    sort: '-publishedAt',
+    ...(draft
+      ? {}
+      : {
+          where: {
+            status: { equals: 'published' },
+          },
+        }),
+  })
+
+  const posts = (res.docs || []) as PostDoc[]
+
+  return { title, bgUrl, posts }
 }
 
 export default async function HomeHighlights() {
-  // Garantiza que no se cachee el resultado de este componente
   noStore()
 
-  const { cfg, items, bgUrl } = await getHomeHighlightsData()
-  if (!cfg) return null
+  const { title, bgUrl, posts } = await getRecentPosts()
+
+  if (posts.length === 0) {
+    return null
+  }
 
   return (
     <section
-      aria-label={cfg.title || 'Recientes'}
+      aria-label={title}
       className={cn(
         'relative overflow-hidden rounded-b-lg border-x border-b border-border/60',
         !bgUrl &&
@@ -194,74 +123,57 @@ export default async function HomeHighlights() {
     >
       <div className="bg-gradient-to-b from-background/90 via-background/78 to-background/92 backdrop-blur-[1px] dark:from-background/95 dark:via-background/88 dark:to-background">
         <div className="container py-8 md:py-10">
-          <div className="flex flex-col gap-8 md:grid md:grid-cols-4 md:items-start md:gap-8">
-            {items.slice(0, 4).map((item, idx) => {
-              if (!item) return <div key={idx} className="min-h-[72px]" aria-hidden />
+          <h2 className="mb-6 font-serif text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
+            {title}
+          </h2>
 
-              const { post, category, thumb, date } = item
-              const catSlug = category?.slug || (category?.id ? String(category.id) : '')
-              const href = catSlug ? `/${catSlug}/${post.slug}` : `/posts/${post.slug}`
-              const catColor = category?.color
+          <ul className="flex flex-col divide-y divide-border border-t border-border">
+            {posts.map((post) => {
+              const thumb = extractThumbFromBlocks(post.blocks) || '/placeholder.jpg'
+              const date = getPostDate(post)
+              const href = `/posts/${post.slug}`
 
               return (
-                <article
-                  key={`${post.id}-${idx}`}
-                  className="flex items-start gap-4 transition-colors md:gap-4"
-                >
-                  <Link
-                    href={href}
-                    className="inline-block h-[72px] w-[72px] shrink-0 overflow-hidden rounded-full bg-muted ring-2 ring-border/70 shadow-card transition-shadow hover:shadow-card-hover"
-                  >
-                    <img
-                      src={thumb}
-                      alt=""
-                      role="presentation"
-                      width={72}
-                      height={72}
-                      className="h-full w-full object-cover"
-                    />
-                  </Link>
-
-                  <div className="min-w-0 flex-1">
-                    <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                      {cfg.title || 'Recientes'}
-                      {category?.title ? (
-                        <>
-                          <span className="mx-1.5 text-muted-foreground/70" aria-hidden>
-                            ·
-                          </span>
-                          <span
-                            className={cn(!catColor && 'text-primary')}
-                            style={catColor ? { color: catColor } : undefined}
-                          >
-                            {category.title}
-                          </span>
-                        </>
-                      ) : null}
-                    </div>
-
+                <li key={post.id}>
+                  <article className="flex gap-4 py-6 first:pt-0 last:pb-0 md:gap-6 md:py-8">
                     <Link
                       href={href}
-                      title={post.title}
-                      className="block max-w-[32ch] truncate font-serif text-base font-bold text-foreground no-underline transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      className="inline-block h-[72px] w-[72px] shrink-0 overflow-hidden rounded-full bg-muted ring-2 ring-border/70 shadow-card transition-shadow hover:shadow-card-hover md:h-20 md:w-20"
                     >
-                      {post.title}
+                      <img
+                        src={thumb}
+                        alt=""
+                        role="presentation"
+                        width={80}
+                        height={80}
+                        className="h-full w-full object-cover"
+                      />
                     </Link>
 
-                    <div className="mt-1 text-xs text-muted-foreground">
-                      {date
-                        ? new Date(date).toLocaleDateString('es-MX', {
-                            day: '2-digit',
-                            month: 'long',
-                            year: 'numeric',
-                          })
-                        : ''}
+                    <div className="min-w-0 flex-1">
+                      <Link
+                        href={href}
+                        title={post.title}
+                        className="block font-serif text-lg font-bold leading-snug text-foreground no-underline transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:text-xl"
+                      >
+                        {post.title}
+                      </Link>
+
+                      <div className="mt-2 text-sm text-muted-foreground">
+                        {date
+                          ? new Date(date).toLocaleDateString('es-MX', {
+                              day: '2-digit',
+                              month: 'long',
+                              year: 'numeric',
+                            })
+                          : ''}
+                      </div>
                     </div>
-                  </div>
-                </article>
+                  </article>
+                </li>
               )
             })}
-          </div>
+          </ul>
         </div>
       </div>
     </section>

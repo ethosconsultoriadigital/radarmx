@@ -1886,29 +1886,18 @@ export interface Footer {
  */
 export interface HomeHighlight {
   id: number;
+  /**
+   * Título de la sección en la página principal
+   */
   title?: string | null;
   /**
    * Fondo opcional difuminado
    */
   background?: (number | null) | Media;
   /**
-   * Define exactamente 4 columnas
+   * Cuántas noticias recientes mostrar (entre 2 y 4), ordenadas por fecha de publicación
    */
-  columns?:
-    | {
-        mode: 'latestByCategory' | 'manualPost';
-        category?: (number | null) | Category;
-        /**
-         * Elige el post a fijar en esta columna
-         */
-        post?: (number | null) | Post;
-        /**
-         * Si lo dejas vacío, se usará la fecha publicada del post (publishedAt)
-         */
-        dateOverride?: string | null;
-        id?: string | null;
-      }[]
-    | null;
+  count: number;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -1965,15 +1954,7 @@ export interface FooterSelect<T extends boolean = true> {
 export interface HomeHighlightsSelect<T extends boolean = true> {
   title?: T;
   background?: T;
-  columns?:
-    | T
-    | {
-        mode?: T;
-        category?: T;
-        post?: T;
-        dateOverride?: T;
-        id?: T;
-      };
+  count?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
