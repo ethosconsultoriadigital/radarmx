@@ -22,7 +22,11 @@
     "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts",
     "db:dump-neon": "node scripts/neon-to-local.mjs --dump-only",
     "db:restore-local": "node scripts/neon-to-local.mjs --restore-only",
-    "db:sync-neon": "node scripts/neon-to-local.mjs"
+    "db:sync-neon": "node scripts/neon-to-local.mjs",
+    "migrate": "cross-env NODE_OPTIONS=--no-deprecation payload migrate",
+    "migrate:create": "cross-env NODE_OPTIONS=--no-deprecation payload migrate:create",
+    "release": "node scripts/release.mjs",
+    "db:reset-and-migrate": "node scripts/reset-db-and-migrate.mjs"
   },
   "dependencies": {
     "@payloadcms/admin-bar": "^3.56.0",
@@ -53,6 +57,7 @@
     "next": "15.4.10",
     "next-sitemap": "^4.2.3",
     "payload": "^3.56.0",
+    "pg": "8.16.3",
     "prism-react-renderer": "^2.4.1",
     "react": "19.1.0",
     "react-dom": "19.1.0",
