@@ -5,20 +5,9 @@ import { getPayload } from 'payload'
 import configPromise from '@payload-config'
 
 import { cn } from '@/utilities/ui'
+import type { Post } from '@/payload-types'
 
 type Media = { url?: string; alt?: string }
-type PostDoc = {
-  id: string
-  title: string
-  slug: string
-  status?: 'draft' | 'published'
-  publishedAt?: string
-  createdAt?: string
-  updatedAt?: string
-  publishDate?: string
-  date?: string
-  blocks?: any[]
-}
 
 type GlobalCfg = {
   title?: string | null
@@ -40,7 +29,7 @@ function extractThumbFromBlocks(blocks?: any[]): string | undefined {
   return undefined
 }
 
-function getPostDate(post?: Partial<PostDoc>): string | undefined {
+function getPostDate(post?: Partial<Post>): string | undefined {
   return (
     post?.publishedAt ||
     (post as any)?.publishDate ||
@@ -54,7 +43,7 @@ function getPostDate(post?: Partial<PostDoc>): string | undefined {
 async function getRecentPosts(): Promise<{
   title: string
   bgUrl?: string
-  posts: PostDoc[]
+  posts: Post[]
 }> {
   const { isEnabled: draft } = await draftMode()
   const payload = await getPayload({ config: configPromise })
@@ -89,7 +78,7 @@ async function getRecentPosts(): Promise<{
         }),
   })
 
-  const posts = (res.docs || []) as PostDoc[]
+  const posts = res.docs ?? []
 
   return { title, bgUrl, posts }
 }
@@ -131,7 +120,7 @@ export default async function HomeHighlights() {
             {posts.map((post) => {
               const thumb = extractThumbFromBlocks(post.blocks) || '/placeholder.jpg'
               const date = getPostDate(post)
-              const href = `/posts/${post.slug}`
+              const href = `/posts/${post.slug ?? ''}`
 
               return (
                 <li key={post.id}>
