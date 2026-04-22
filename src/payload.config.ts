@@ -64,6 +64,8 @@ export default buildConfig({
     pool: {
       connectionString: process.env.DATABASE_URI || '',
     },
+    // Solo migraciones; evita "push" en dev y el prompt de mezcla push/migraciones (ver docs Payload Postgres).
+    push: false,
     prodMigrations: migrations,
   }),
   collections: [Pages, Posts, Media, Categories, Users],
