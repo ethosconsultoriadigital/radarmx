@@ -8,6 +8,14 @@ import { ThemeSelector } from '@/providers/Theme/ThemeSelector'
 import { CMSLink } from '@/components/Link'
 import { Logo } from '@/components/Logo/Logo'
 
+const legalLinks = [
+  { href: '/terminos', label: 'Términos y condiciones' },
+  { href: '/privacidad', label: 'Aviso de privacidad' },
+] as const
+
+const footerLinkClass =
+  'text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+
 export async function Footer() {
   const footerData: Footer = await getCachedGlobal('footer', 1)()
 
@@ -26,22 +34,19 @@ export async function Footer() {
           </Link>
 
           <div className="flex flex-col gap-8 sm:flex-row sm:items-start sm:gap-12">
-            {navItems.length > 0 && (
-              <nav
-                className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-x-8 sm:gap-y-2"
-                aria-label="Pie de página"
-              >
-                {navItems.map(({ link }, i) => {
-                  return (
-                    <CMSLink
-                      className="text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                      key={i}
-                      {...link}
-                    />
-                  )
-                })}
-              </nav>
-            )}
+            <nav
+              className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-x-8 sm:gap-y-2"
+              aria-label="Pie de página"
+            >
+              {navItems.map(({ link }, i) => {
+                return <CMSLink className={footerLinkClass} key={i} {...link} />
+              })}
+              {legalLinks.map(({ href, label }) => (
+                <Link className={footerLinkClass} href={href} key={href}>
+                  {label}
+                </Link>
+              ))}
+            </nav>
 
             <div className="flex shrink-0 items-center gap-2 border-t border-border pt-6 sm:border-l sm:border-t-0 sm:pl-8 sm:pt-0">
               <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground sm:sr-only">
