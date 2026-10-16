@@ -1,9 +1,14 @@
 import type { GlobalConfig } from 'payload'
 
+import { authenticated } from '@/access/authenticated'
+
 export const HomeHighlights: GlobalConfig = {
   slug: 'home-highlights',
   label: 'Home: Recientes',
-  access: { read: () => true },
+  access: {
+    read: () => true,
+    update: authenticated,
+  },
   fields: [
     {
       name: 'title',

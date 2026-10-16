@@ -13,6 +13,7 @@ import { beforeSyncWithSearch } from '@/search/beforeSync'
 import { gcsStorage } from '@payloadcms/storage-gcs'
 
 import { Page, Post } from '@/payload-types'
+import { authenticated } from '@/access/authenticated'
 import { getServerSideURL } from '@/utilities/getURL'
 
 // deploy
@@ -33,6 +34,12 @@ export const plugins: Plugin[] = [
   redirectsPlugin({
     collections: ['pages', 'posts'],
     overrides: {
+      access: {
+        create: authenticated,
+        delete: authenticated,
+        read: () => true,
+        update: authenticated,
+      },
       // @ts-expect-error - This is a valid override, mapped fields don't resolve to the same type
       fields: ({ defaultFields }) => {
         return defaultFields.map((field) => {
@@ -65,6 +72,12 @@ export const plugins: Plugin[] = [
       payment: false,
     },
     formOverrides: {
+      access: {
+        create: authenticated,
+        delete: authenticated,
+        read: () => true,
+        update: authenticated,
+      },
       fields: ({ defaultFields }) => {
         return defaultFields.map((field) => {
           if ('name' in field && field.name === 'confirmationMessage') {
@@ -85,11 +98,26 @@ export const plugins: Plugin[] = [
         })
       },
     },
+    formSubmissionOverrides: {
+      // El formulario público del sitio hace POST anónimo. Lectura, edición y borrado no.
+      access: {
+        create: () => true,
+        delete: authenticated,
+        read: authenticated,
+        update: () => false,
+      },
+    },
   }),
   searchPlugin({
     collections: ['posts'],
     beforeSync: beforeSyncWithSearch,
     searchOverrides: {
+      access: {
+        create: () => false,
+        delete: authenticated,
+        read: () => true,
+        update: authenticated,
+      },
       fields: ({ defaultFields }) => {
         return [...defaultFields, ...searchFields]
       },
