@@ -1,0 +1,19 @@
+import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres'
+
+export async function up({ db }: MigrateUpArgs): Promise<void> {
+  await db.execute(sql`
+   ALTER TABLE "posts" ALTER COLUMN "seo_open_graph_og_site_name" SET DEFAULT 'Radar Mex';
+  ALTER TABLE "_posts_v" ALTER COLUMN "version_seo_open_graph_og_site_name" SET DEFAULT 'Radar Mex';
+  ALTER TABLE "users" ADD COLUMN "enable_a_p_i_key" boolean;
+  ALTER TABLE "users" ADD COLUMN "api_key" varchar;
+  ALTER TABLE "users" ADD COLUMN "api_key_index" varchar;`)
+}
+
+export async function down({ db }: MigrateDownArgs): Promise<void> {
+  await db.execute(sql`
+   ALTER TABLE "posts" ALTER COLUMN "seo_open_graph_og_site_name" SET DEFAULT 'Diario en Contexto';
+  ALTER TABLE "_posts_v" ALTER COLUMN "version_seo_open_graph_og_site_name" SET DEFAULT 'Diario en Contexto';
+  ALTER TABLE "users" DROP COLUMN "enable_a_p_i_key";
+  ALTER TABLE "users" DROP COLUMN "api_key";
+  ALTER TABLE "users" DROP COLUMN "api_key_index";`)
+}

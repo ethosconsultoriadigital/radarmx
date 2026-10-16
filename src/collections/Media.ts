@@ -12,7 +12,7 @@ import { authenticated } from '../access/authenticated'
 export const Media: CollectionConfig = {
   slug: 'media',
   access: {
-    create: () => true,
+    create: authenticated,
     delete: authenticated,
     read: anyone,
     update: authenticated,
