@@ -109,7 +109,8 @@ export default async function FeatureWithSidebarComponent() {
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={leftImage}
-                    alt={leftTitle}
+                    alt={leftTitle || 'Imagen'}
+                    loading="lazy"
                     className="absolute inset-0 h-full w-full object-cover"
                   />
                 </div>
@@ -142,7 +143,12 @@ export default async function FeatureWithSidebarComponent() {
                       title={post.title}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={thumb} alt={post.title} className="h-full w-full object-cover" />
+                      <img
+                        src={thumb}
+                        alt={post.title || 'Imagen'}
+                        loading="lazy"
+                        className="h-full w-full object-cover"
+                      />
                     </Link>
 
                     <div className="min-w-0">

@@ -131,10 +131,10 @@ export default async function HomeHighlights() {
                     >
                       <img
                         src={thumb}
-                        alt=""
-                        role="presentation"
+                        alt={post.title || 'Imagen'}
                         width={80}
                         height={80}
+                        loading="lazy"
                         className="h-full w-full object-cover"
                       />
                     </Link>

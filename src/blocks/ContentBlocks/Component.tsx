@@ -34,7 +34,7 @@ export function ContentBlocks({ blocks }: { blocks: AnyBlock[] }) {
   if (!blocks?.length) return null
 
   return (
-    <article itemScope itemType="https://schema.org/NewsArticle">
+    <div>
       {blocks.map((block, idx) => {
         const key = block.id || `${block.blockType}-${idx}`
         switch (block.blockType) {
@@ -60,7 +60,7 @@ export function ContentBlocks({ blocks }: { blocks: AnyBlock[] }) {
             return null
         }
       })}
-    </article>
+    </div>
   )
 }
 

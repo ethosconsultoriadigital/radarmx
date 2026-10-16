@@ -24,7 +24,9 @@ const generateTitle: GenerateTitle<Post | Page> = ({ doc }) => {
 const generateURL: GenerateURL<Post | Page> = ({ doc }) => {
   const url = getServerSideURL()
 
-  return doc?.slug ? `${url}/${doc.slug}` : url
+  if (!doc?.slug || doc.slug === 'home') return url
+  if ('status' in doc) return `${url}/posts/${doc.slug}`
+  return `${url}/${doc.slug}`
 }
 
 export const plugins: Plugin[] = [
@@ -97,7 +99,16 @@ export const plugins: Plugin[] = [
   gcsStorage({
     enabled: Boolean(process.env.GCS_BUCKET?.trim()),
     collections: {
-      media: true,
+      media: {
+        // La clave pública es el filename, no `/api/media/file/...`.
+        // Con uniform bucket-level access, `acl: 'Public'` no basta: hace falta
+        // `allUsers` con `roles/storage.objectViewer` en el bucket.
+        generateFileURL: ({ filename, prefix }) => {
+          const bucket = (process.env.GCS_BUCKET || 'payload-radarmex').trim()
+          const key = [prefix, filename].filter(Boolean).join('/')
+          return `https://storage.googleapis.com/${bucket}/${key}`
+        },
+      },
     },
     bucket: process.env.GCS_BUCKET as string,
     options: {

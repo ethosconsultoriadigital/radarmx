@@ -10,7 +10,8 @@ import { Header } from '@/Header/Component'
 import { Providers } from '@/providers'
 import { InitTheme } from '@/providers/Theme/InitTheme'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
-import { getServerSideURL } from '@/utilities/getURL'
+import { absoluteURL, getServerSideURL } from '@/utilities/getURL'
+import { SITE_DESCRIPTION, SITE_LOCALE, SITE_NAME, SITE_TITLE_DEFAULT } from '@/utilities/site'
 
 import HomeHighlights from '@/HomeHighlights/Component'
 import './globals.css'
@@ -25,13 +26,32 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html
       className={cn(frank.variable, GeistSans.variable, GeistMono.variable)}
-      lang="es"
+      lang={SITE_LOCALE}
       suppressHydrationWarning
     >
       <head>
         <InitTheme />
       </head>
       <body className="font-sans">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'NewsMediaOrganization',
+              name: SITE_NAME,
+              url: getServerSideURL(),
+              description: SITE_DESCRIPTION,
+              logo: {
+                '@type': 'ImageObject',
+                url: absoluteURL('/radarmex_profile.png'),
+                width: 800,
+                height: 800,
+              },
+              publishingPrinciples: absoluteURL('/terminos'),
+            }),
+          }}
+        />
         <Providers>
           <Header />
           <HomeHighlights />
@@ -45,12 +65,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
 export const metadata: Metadata = {
   metadataBase: new URL(getServerSideURL()),
+  title: SITE_TITLE_DEFAULT,
+  description: SITE_DESCRIPTION,
   icons: {
     icon: [{ url: '/logo.favico.ico', type: 'image/x-icon', sizes: 'any' }],
   },
   openGraph: mergeOpenGraph(),
   twitter: {
     card: 'summary_large_image',
-    creator: '@payloadcms',
   },
 }

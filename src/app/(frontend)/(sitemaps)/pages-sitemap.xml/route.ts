@@ -3,13 +3,12 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import { unstable_cache } from 'next/cache'
 
+import { absoluteURL } from '@/utilities/getURL'
+
 const getPagesSitemap = unstable_cache(
   async () => {
     const payload = await getPayload({ config })
-    const SITE_URL =
-      process.env.NEXT_PUBLIC_SERVER_URL ||
-      process.env.VERCEL_PROJECT_PRODUCTION_URL ||
-      'https://example.com'
+    const dateFallback = new Date().toISOString()
 
     const results = await payload.find({
       collection: 'pages',
@@ -29,23 +28,21 @@ const getPagesSitemap = unstable_cache(
       },
     })
 
-    const dateFallback = new Date().toISOString()
-
     const defaultSitemap = [
       {
-        loc: `${SITE_URL}/search`,
+        loc: absoluteURL('/search'),
         lastmod: dateFallback,
       },
       {
-        loc: `${SITE_URL}/posts`,
+        loc: absoluteURL('/posts'),
         lastmod: dateFallback,
       },
       {
-        loc: `${SITE_URL}/terminos`,
+        loc: absoluteURL('/terminos'),
         lastmod: dateFallback,
       },
       {
-        loc: `${SITE_URL}/privacidad`,
+        loc: absoluteURL('/privacidad'),
         lastmod: dateFallback,
       },
     ]
@@ -55,7 +52,7 @@ const getPagesSitemap = unstable_cache(
           .filter((page) => Boolean(page?.slug))
           .map((page) => {
             return {
-              loc: page?.slug === 'home' ? `${SITE_URL}/` : `${SITE_URL}/${page?.slug}`,
+              loc: page?.slug === 'home' ? absoluteURL('/') : absoluteURL(`/${page?.slug}`),
               lastmod: page.updatedAt || dateFallback,
             }
           })
@@ -66,8 +63,12 @@ const getPagesSitemap = unstable_cache(
   ['pages-sitemap'],
   {
     tags: ['pages-sitemap'],
+    revalidate: 60,
   },
 )
+
+export const dynamic = 'force-dynamic'
+export const revalidate = 60
 
 export async function GET() {
   const sitemap = await getPagesSitemap()

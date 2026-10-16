@@ -14,7 +14,7 @@ export function ImageBlockComp({ image, alt, display = 'inline', caption, credit
     >
       <img
         src={url}
-        alt={alt}
+        alt={alt || 'Imagen'}
         className={clsx('mx-auto', display === 'full' ? 'w-full' : 'max-w-4xl w-full')}
         loading="lazy"
       />

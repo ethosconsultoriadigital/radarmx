@@ -121,7 +121,7 @@ export const RelatedPosts: React.FC<RelatedPostsProps> = (props) => {
                 <img
                   className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                   src={imgSrc}
-                  alt=""
+                  alt={post.title || 'Imagen'}
                   loading="lazy"
                 />
               </a>

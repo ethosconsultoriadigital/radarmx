@@ -30,9 +30,10 @@ export function HeroBlock(props: HeroBlockT) {
           {/* Usa <img> por SEO de imágenes y compatibilidad sencilla */}
           <img
             src={isObj(image) ? mediaUrl(image as Media) : undefined}
-            alt={isObj(image) ? (image as Media).alt || title : title}
+            alt={(isObj(image) ? (image as Media).alt : undefined) || title || 'Imagen'}
             className="h-full w-full object-cover"
             loading="eager"
+            fetchPriority="high"
           />
           {subtitle && <meta itemProp="description" content={subtitle} />}
         </figure>
