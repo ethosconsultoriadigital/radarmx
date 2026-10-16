@@ -64,7 +64,7 @@ export const Card: React.FC<Props> = (props) => {
         {imgUrl ? (
           <img
             src={imgUrl}
-            alt={imgAlt}
+            alt={imgAlt || 'Imagen'}
             className="aspect-[16/10] w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
             loading="lazy"
           />

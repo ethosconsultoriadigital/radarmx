@@ -41,7 +41,7 @@ const PostGrid = ({ doc, showDates }: { doc: Post; showDates: boolean }) => {
           <img
             loading="lazy"
             className="object-cover object-center m-0 w-100 transition-all group-hover:scale-110 h-full w-full aspect-square"
-            alt={alt}
+            alt={alt || 'Imagen'}
             src={src}
           />
         )}

@@ -94,7 +94,7 @@ export const SEO: Field = {
           name: 'ogSiteName',
           type: 'text',
           label: 'OG Site Name',
-          defaultValue: 'Diario en Contexto',
+          defaultValue: 'Radar Mex',
         },
         { name: 'ogLocale', type: 'text', label: 'OG Locale', defaultValue: 'es_MX' },
       ],

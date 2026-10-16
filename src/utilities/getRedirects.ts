@@ -1,14 +1,16 @@
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
-import { unstable_cache } from 'next/cache'
+import { cache } from 'react'
 
-export async function getRedirects(depth = 1) {
+import type { Redirect } from '@/payload-types'
+
+export async function getRedirects(depth = 1): Promise<Redirect[]> {
   const payload = await getPayload({ config: configPromise })
 
   const { docs: redirects } = await payload.find({
     collection: 'redirects',
     depth,
-    limit: 0,
+    limit: 500,
     pagination: false,
   })
 
@@ -16,11 +18,15 @@ export async function getRedirects(depth = 1) {
 }
 
 /**
- * Returns a unstable_cache function mapped with the cache tag for 'redirects'.
- *
- * Cache all redirects together to avoid multiple fetches.
+ * Dedup por request. No usa `unstable_cache`: envolver `getPayload` ahí
+ * lanzaba en runtime (headers dentro del caché) y las URLs inexistentes
+ * respondían 500 en lugar de llegar a `notFound()`.
  */
-export const getCachedRedirects = () =>
-  unstable_cache(async () => getRedirects(), ['redirects'], {
-    tags: ['redirects'],
-  })
+export const getCachedRedirects = cache(async (): Promise<Redirect[]> => {
+  try {
+    return await getRedirects()
+  } catch (error) {
+    console.error('No se pudieron cargar las redirecciones', error)
+    return []
+  }
+})

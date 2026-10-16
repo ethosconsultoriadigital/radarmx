@@ -3,6 +3,7 @@ import type { CollectionConfig, Field } from 'payload'
 import { authenticated } from '../../access/authenticated'
 import { authenticatedOrPublished } from '../../access/authenticatedOrPublished'
 import { generatePreviewPath } from '../../utilities/generatePreviewPath'
+import { ensurePublishedAfterChange, ensurePublishedBeforeChange } from './hooks/ensurePublished'
 import { populateAuthors } from './hooks/populateAuthors'
 import { revalidateDelete, revalidatePost } from './hooks/revalidatePost'
 import { RelatedPosts } from '@/blocks/RelatedPosts/config'
@@ -168,9 +169,10 @@ export const Posts: CollectionConfig<'posts'> = {
     },
   ],
   hooks: {
-    afterChange: [revalidatePost],
+    afterChange: [ensurePublishedAfterChange, revalidatePost],
     afterRead: [populateAuthors],
     afterDelete: [revalidateDelete],
+    beforeChange: [ensurePublishedBeforeChange],
     beforeValidate: [
       ({ operation, data }) => {
         if (operation === 'create') {

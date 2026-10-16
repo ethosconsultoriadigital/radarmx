@@ -23,7 +23,12 @@ export function GalleryBlock({ items = [], layout = 'grid' }: GalleryBlockT) {
                 'break-inside-avoid',
               )}
             >
-              <img src={url} alt={it.alt} className="w-full h-auto rounded-lg" loading="lazy" />
+              <img
+                src={url}
+                alt={it.alt || 'Imagen'}
+                className="w-full h-auto rounded-lg"
+                loading="lazy"
+              />
               {it.caption && (
                 <figcaption className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
                   {it.caption}

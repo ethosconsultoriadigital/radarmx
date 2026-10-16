@@ -190,7 +190,8 @@ export default async function TagsBlockComponent(props: Props) {
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={thumb}
-                            alt={p.title}
+                            alt={p.title || 'Imagen'}
+                            loading="lazy"
                             className="absolute inset-0 h-full w-full object-cover"
                           />
                         </div>
@@ -219,7 +220,8 @@ export default async function TagsBlockComponent(props: Props) {
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={leftThumb}
-                    alt={leftPost.title}
+                    alt={leftPost.title || 'Imagen'}
+                    loading="lazy"
                     className="absolute inset-0 h-full w-full object-cover"
                   />
                 </div>

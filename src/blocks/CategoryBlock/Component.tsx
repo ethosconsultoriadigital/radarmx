@@ -141,7 +141,8 @@ export default function CategoryBlockComponent(props: Props) {
                 <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
                   <img
                     src={leftThumb}
-                    alt={leftPost.title}
+                    alt={leftPost.title || 'Imagen'}
+                    loading="lazy"
                     className="absolute inset-0 h-full w-full object-cover"
                   />
                 </div>
@@ -169,7 +170,12 @@ export default function CategoryBlockComponent(props: Props) {
                       title={p.title}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={thumb} alt={p.title} className="h-full w-full object-cover" />
+                      <img
+                        src={thumb}
+                        alt={p.title || 'Imagen'}
+                        loading="lazy"
+                        className="h-full w-full object-cover"
+                      />
                     </Link>
 
                     <div className="min-w-0">

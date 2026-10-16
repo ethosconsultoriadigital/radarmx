@@ -175,10 +175,14 @@ export default async function CategoryPage({ params }: PageProps) {
                   className="group flex flex-col overflow-hidden rounded-lg border border-border bg-card text-card-foreground shadow-card transition-shadow hover:shadow-card-hover"
                 >
                   {imgUrl && (
-                    <a href={href} className="block overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                    <a
+                      href={href}
+                      className="block overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    >
                       <img
                         src={imgUrl}
-                        alt={imgAlt}
+                        alt={imgAlt || 'Imagen'}
+                        loading="lazy"
                         className="h-48 w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
                       />
                     </a>
@@ -197,7 +201,9 @@ export default async function CategoryPage({ params }: PageProps) {
                     )}
 
                     {description && (
-                      <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">{description}</p>
+                      <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">
+                        {description}
+                      </p>
                     )}
 
                     {Array.isArray(post.tags) && post.tags.length > 0 && (

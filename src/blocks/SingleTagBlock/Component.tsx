@@ -206,7 +206,8 @@ export default async function SingleTagBlockComponent(props: Props) {
                 <div className="w-full h-[180px] sm:h-[200px]">
                   <img
                     src={thumb(leftBig)}
-                    alt={leftBig.title}
+                    alt={leftBig.title || 'Imagen'}
+                    loading="lazy"
                     className="h-full w-full object-cover"
                   />
                   {/* <Badge post={leftBig} /> */}
@@ -225,7 +226,8 @@ export default async function SingleTagBlockComponent(props: Props) {
               <div className="relative h-[72px] w-[128px] shrink-0 overflow-hidden rounded-md bg-[#e9eef2] shadow-sm">
                 <img
                   src={thumb(leftSmall)}
-                  alt={leftSmall.title}
+                  alt={leftSmall.title || 'Imagen'}
+                  loading="lazy"
                   className="h-full w-full object-cover"
                 />
                 {/* <Badge post={leftSmall} /> */}
@@ -252,7 +254,8 @@ export default async function SingleTagBlockComponent(props: Props) {
                 <div className="w-full h-[360px] sm:h-[420px]">
                   <img
                     src={thumb(center)}
-                    alt={center.title}
+                    alt={center.title || 'Imagen'}
+                    loading="lazy"
                     className="h-full w-full object-cover"
                   />
                   <Badge post={center} />
@@ -280,7 +283,8 @@ export default async function SingleTagBlockComponent(props: Props) {
                 <div className="relative overflow-hidden rounded-lg bg-[#e9eef2] shadow-sm flex-shrink-0 w-[120px] sm:w-[140px] h-[84px] sm:h-[96px]">
                   <img
                     src={thumb(rightBig)}
-                    alt={rightBig.title}
+                    alt={rightBig.title || 'Imagen'}
+                    loading="lazy"
                     className="h-full w-full object-cover"
                   />
                   {/* <Badge post={rightBig} /> */}
@@ -313,7 +317,8 @@ export default async function SingleTagBlockComponent(props: Props) {
               <div className="relative h-[72px] w-[128px] shrink-0 overflow-hidden rounded-md bg-[#e9eef2] shadow-sm">
                 <img
                   src={thumb(rightSmall)}
-                  alt={rightSmall.title}
+                  alt={rightSmall.title || 'Imagen'}
+                  loading="lazy"
                   className="h-full w-full object-cover"
                 />
                 {/* <Badge post={rightSmall} /> */}
