@@ -8,6 +8,7 @@ import {
 
 import { anyone } from '../access/anyone'
 import { authenticated } from '../access/authenticated'
+import { markR2Prefix } from './Media/hooks/markR2Prefix'
 
 export const Media: CollectionConfig = {
   slug: 'media',
@@ -32,7 +33,19 @@ export const Media: CollectionConfig = {
         },
       }),
     },
+    {
+      name: 'prefix',
+      type: 'text',
+      admin: {
+        hidden: true,
+        readOnly: true,
+        description: 'r2 en uploads nuevos. Vacío en medios históricos de GCS.',
+      },
+    },
   ],
+  hooks: {
+    beforeChange: [markR2Prefix],
+  },
   upload: {
     adminThumbnail: 'thumbnail',
     focalPoint: true,

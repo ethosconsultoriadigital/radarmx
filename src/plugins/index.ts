@@ -10,10 +10,9 @@ import { GenerateTitle, GenerateURL } from '@payloadcms/plugin-seo/types'
 import { FixedToolbarFeature, HeadingFeature, lexicalEditor } from '@payloadcms/richtext-lexical'
 import { searchFields } from '@/search/fieldOverrides'
 import { beforeSyncWithSearch } from '@/search/beforeSync'
-import { gcsStorage } from '@payloadcms/storage-gcs'
-
 import { Page, Post } from '@/payload-types'
 import { getServerSideURL } from '@/utilities/getURL'
+import { mediaStoragePlugin } from './mediaStorage'
 
 // deploy
 
@@ -96,29 +95,5 @@ export const plugins: Plugin[] = [
     },
   }),
   payloadCloudPlugin(),
-  gcsStorage({
-    enabled: Boolean(process.env.GCS_BUCKET?.trim()),
-    collections: {
-      media: {
-        // La clave pública es el filename, no `/api/media/file/...`.
-        // Con uniform bucket-level access, `acl: 'Public'` no basta: hace falta
-        // `allUsers` con `roles/storage.objectViewer` en el bucket.
-        generateFileURL: ({ filename, prefix }) => {
-          const bucket = (process.env.GCS_BUCKET || 'payload-radarmex').trim()
-          const key = [prefix, filename].filter(Boolean).join('/')
-          return `https://storage.googleapis.com/${bucket}/${key}`
-        },
-      },
-    },
-    bucket: process.env.GCS_BUCKET as string,
-    options: {
-      apiEndpoint: process.env.GCS_ENDPOINT,
-      projectId: process.env.GCS_PROJECT_ID,
-      credentials: {
-        client_email: process.env.GCS_CLIENT_EMAIL,
-        private_key: (process.env.GCS_PRIVATE_KEY ?? '').replace(/\\n/g, '\n'),
-      },
-    },
-    acl: 'Public',
-  }),
+  mediaStoragePlugin(),
 ]

@@ -2,6 +2,38 @@
 
 Sitio editorial basado en la plantilla oficial [Payload Website Template](https://github.com/payloadcms/payload/blob/main/templates/website): backend Payload, panel de administración y frontend Next.js.
 
+## Medios: Cloudflare R2
+
+Los uploads nuevos de la colección `media` van a Cloudflare R2 cuando `R2_BUCKET` está definido. Si esa variable está vacía, se conserva Google Cloud Storage. Nunca los dos a la vez para `media`.
+
+Las notas ya publicadas no se migran. Su URL absoluta de `storage.googleapis.com` se deja igual (sigue rota mientras el bucket de GCS no tenga facturación). Los archivos nuevos se guardan con el prefijo de clave `r2/` y la URL `${R2_PUBLIC_URL}/r2/<archivo>`. Ese prefijo es lo que distingue un upload nuevo de uno viejo al leer: sin él, Payload sigue armando la URL de GCS.
+
+### Crear el bucket
+
+1. En el dashboard de Cloudflare de la cuenta propia: **R2 → Create bucket**. El nombre es el valor de `R2_BUCKET`.
+2. **Settings → Public access**. Para pruebas, **Public Development URL** (`r2.dev`): Enable y confirma con `allow`. Para producción, conecta un dominio propio (**Custom Domains**) y úsalo como URL pública. `r2.dev` tiene límite de tasa y no es el destino de producción.
+3. Copia la URL pública, sin barra final, en `R2_PUBLIC_URL`. Ejemplo: `https://pub-xxxx.r2.dev` o `https://media.example.com`.
+4. **R2 → Manage R2 API Tokens → Create API token**. Permiso **Object Read & Write** limitado a ese bucket. Account ID de la cuenta, Access Key ID y Secret Access Key salen una sola vez.
+
+R2 no usa ACL por objeto. No actives `public-read` en el cliente S3. La lectura anónima la da el dominio público del bucket, no el endpoint `*.r2.cloudflarestorage.com` (ese es solo para la API).
+
+### Variables en Vercel (Production)
+
+Definirlas antes del deploy. `next build` lee `R2_PUBLIC_URL` para autorizar el host en `images.remotePatterns`. Si se cambia después, hay que volver a desplegar.
+
+| Variable               | Valor                                                                    |
+| ---------------------- | ------------------------------------------------------------------------ |
+| `R2_BUCKET`            | Nombre del bucket                                                        |
+| `R2_ACCOUNT_ID`        | Account ID de Cloudflare. No hace falta si defines `R2_ENDPOINT`         |
+| `R2_ENDPOINT`          | Opcional. Por defecto `https://<R2_ACCOUNT_ID>.r2.cloudflarestorage.com` |
+| `R2_ACCESS_KEY_ID`     | Access Key ID del token                                                  |
+| `R2_SECRET_ACCESS_KEY` | Secret del token                                                         |
+| `R2_PUBLIC_URL`        | Origen público, sin barra final                                          |
+
+`R2_BUCKET` vacío deja el adapter de GCS (`GCS_BUCKET`, `GCS_PROJECT_ID`, `GCS_CLIENT_EMAIL`, `GCS_PRIVATE_KEY`, `GCS_ENDPOINT`). Con `R2_BUCKET` puesto, esas variables de GCS no suben archivos nuevos.
+
+El build de este repo corre `payload migrate` antes de `next build`. La migración `20261111_120000_media_prefix` agrega `media.prefix` (nula en las filas viejas).
+
 This template is right for you if you are working on:
 
 - A personal or enterprise-grade website, blog, or portfolio
@@ -316,6 +348,6 @@ Before deploying your app, you need to:
 
 You can also deploy your app manually, check out the [deployment documentation](https://payloadcms.com/docs/production/deployment) for full details.
 
-## Questions Nuevos cambios  hechos hoy esto es nuevo hoy
+## Questions Nuevos cambios hechos hoy esto es nuevo hoy
 
 If you have any issues or questions, reach out to us on [Discord](https://discord.com/invite/payload) or start a [GitHub discussion](https://github.com/payloadcms/payload/discussions).

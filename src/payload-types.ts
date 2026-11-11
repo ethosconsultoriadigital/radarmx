@@ -479,6 +479,8 @@ export interface Media {
   url?: string | null;
   thumbnailURL?: string | null;
   filename?: string | null;
+  /** `r2` en uploads nuevos. Vacío en medios históricos de GCS. */
+  prefix?: string | null;
   mimeType?: string | null;
   filesize?: number | null;
   width?: number | null;

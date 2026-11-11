@@ -6,6 +6,27 @@ const NEXT_PUBLIC_SERVER_URL = process.env.VERCEL_PROJECT_PRODUCTION_URL
   ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
   : undefined || process.env.__NEXT_PRIVATE_ORIGIN || 'http://localhost:3000'
 
+/** Host de R2_PUBLIC_URL, si está definido en el momento del build. */
+function r2ImagePattern() {
+  const raw = process.env.R2_PUBLIC_URL?.trim()
+  if (!raw) return []
+
+  try {
+    const url = new URL(raw)
+    const basePath = url.pathname.replace(/\/+$/, '')
+    return [
+      {
+        protocol: url.protocol.replace(':', ''),
+        hostname: url.hostname,
+        ...(url.port ? { port: url.port } : {}),
+        ...(basePath ? { pathname: `${basePath}/**` } : {}),
+      },
+    ]
+  } catch {
+    return []
+  }
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
@@ -14,6 +35,7 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'storage.googleapis.com',
       },
+      ...r2ImagePattern(),
       {
         protocol: 'https',
         hostname: 'www.radarmex.com',
