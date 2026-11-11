@@ -3,14 +3,20 @@ import { getMediaUrl } from './getMediaUrl'
 
 type MediaLike = Pick<Media, 'filename' | 'url'> | string | number | null | undefined
 
-/** Prefiere el filename (clave real en GCS) sobre la ruta interna `/api/media/file`. */
+/**
+ * Una URL absoluta guardada (GCS histórico o R2 nuevo) se respeta.
+ * El filename solo reconstruye GCS cuando no hay URL absoluta: así una nota
+ * vieja sin `url` sigue apuntando al bucket anterior.
+ */
 export const mediaUrl = (m?: MediaLike) => {
   if (!m || typeof m === 'number') return undefined
   if (typeof m === 'string') {
     const url = getMediaUrl(m)
     return url || undefined
   }
-  const url = getMediaUrl(m.filename || m.url)
+  const stored = m.url?.trim()
+  const source = stored && /^https?:\/\//i.test(stored) ? stored : m.filename || stored
+  const url = getMediaUrl(source)
   return url || undefined
 }
 
