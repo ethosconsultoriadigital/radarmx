@@ -25,15 +25,18 @@ export function r2Endpoint(): string {
   return `https://${accountId}.r2.cloudflarestorage.com`
 }
 
-export function objectKey(prefix: string | null | undefined, filename: string): string {
-  return [prefix?.replace(/^\/+|\/+$/g, ''), filename.replace(/^\/+/, '')].filter(Boolean).join('/')
+export function objectKey(
+  prefix: string | null | undefined,
+  filename: string | null | undefined,
+): string {
+  return [prefix?.replace(/^\/+|\/+$/g, ''), filename?.replace(/^\/+/, '')].filter(Boolean).join('/')
 }
 
 export function gcsPublicFileURL({
   filename,
   prefix,
 }: {
-  filename: string
+  filename: string | null | undefined
   prefix?: string | null
 }): string {
   return `${getGcsBaseUrl()}/${objectKey(prefix, filename)}`
@@ -44,7 +47,7 @@ export function r2PublicFileURL({
   filename,
   prefix,
 }: {
-  filename: string
+  filename: string | null | undefined
   prefix?: string | null
 }): string {
   const base = (process.env.R2_PUBLIC_URL || '').trim().replace(/\/+$/, '')
@@ -63,7 +66,7 @@ export function resolveStoredMediaURL({
   filename,
   prefix,
 }: {
-  filename: string
+  filename: string | null | undefined
   prefix?: string | null
 }): string {
   const normalized = prefix?.replace(/^\/+|\/+$/g, '') || undefined

@@ -102,6 +102,9 @@ describe('almacenamiento R2 o GCS', () => {
     expect(resolveStoredMediaURL({ filename: 'vieja.jpg' })).toBe(
       'https://storage.googleapis.com/payload-radarmex/vieja.jpg',
     )
+    expect(resolveStoredMediaURL({ filename: null })).toBe(
+      'https://storage.googleapis.com/payload-radarmex/',
+    )
     expect(resolveStoredMediaURL({ filename: 'nueva.jpg', prefix: 'r2' })).toBe(
       'https://pub-example.r2.dev/r2/nueva.jpg',
     )
