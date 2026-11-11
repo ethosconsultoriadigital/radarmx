@@ -6,7 +6,7 @@ import {
   gcsPublicFileURL,
   r2Endpoint,
   resolveStoredMediaURL,
-  useR2ForMedia,
+  isR2MediaEnabled,
 } from '@/utilities/objectStorage'
 
 /**
@@ -14,7 +14,7 @@ import {
  * Si no, se conserva el plugin de GCS (apagado cuando `GCS_BUCKET` está vacío).
  */
 export function mediaStoragePlugin(): Plugin {
-  if (useR2ForMedia()) {
+  if (isR2MediaEnabled()) {
     if (!process.env.R2_PUBLIC_URL?.trim()) {
       throw new Error('R2_PUBLIC_URL es obligatorio cuando R2_BUCKET está definido.')
     }

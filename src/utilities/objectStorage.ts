@@ -8,7 +8,7 @@ import { getGcsBaseUrl } from './getMediaUrl'
  */
 export const R2_OBJECT_PREFIX = 'r2'
 
-export function useR2ForMedia(): boolean {
+export function isR2MediaEnabled(): boolean {
   return Boolean(process.env.R2_BUCKET?.trim())
 }
 
@@ -67,12 +67,12 @@ export function resolveStoredMediaURL({
   prefix?: string | null
 }): string {
   const normalized = prefix?.replace(/^\/+|\/+$/g, '') || undefined
-  if (useR2ForMedia() && normalized) {
+  if (isR2MediaEnabled() && normalized) {
     return r2PublicFileURL({ filename, prefix: normalized })
   }
 
   return gcsPublicFileURL({
     filename,
-    prefix: useR2ForMedia() ? undefined : normalized,
+    prefix: isR2MediaEnabled() ? undefined : normalized,
   })
 }

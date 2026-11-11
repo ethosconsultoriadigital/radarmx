@@ -8,7 +8,7 @@ import {
   r2Endpoint,
   r2PublicFileURL,
   resolveStoredMediaURL,
-  useR2ForMedia,
+  isR2MediaEnabled,
 } from '@/utilities/objectStorage'
 
 describe('URLs públicas', () => {
@@ -80,9 +80,9 @@ describe('almacenamiento R2 o GCS', () => {
   it('elige R2 solo cuando R2_BUCKET tiene valor', () => {
     delete process.env.R2_BUCKET
     process.env.GCS_BUCKET = 'payload-radarmex'
-    expect(useR2ForMedia()).toBe(false)
+    expect(isR2MediaEnabled()).toBe(false)
     process.env.R2_BUCKET = ' radarmex '
-    expect(useR2ForMedia()).toBe(true)
+    expect(isR2MediaEnabled()).toBe(true)
     restore()
   })
 
