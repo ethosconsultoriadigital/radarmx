@@ -67,6 +67,12 @@ export default async function Page({ params: paramsPromise }: Args) {
   }
 
   const { layout } = page
+  // El bloque «Destacado + Lista» de la portada titulaba «Recientes» y
+  // mostraba fotos viejas de GCS. La lista vigente es HomeHighlights.
+  const blocks =
+    slug === 'home'
+      ? (layout || []).filter((block) => block.blockType !== 'featureWithSidebar')
+      : layout
 
   return (
     <main className="pb-20 pt-8 md:pb-24 md:pt-12">
@@ -87,7 +93,7 @@ export default async function Page({ params: paramsPromise }: Args) {
 
       {draft && <LivePreviewListener />}
 
-      <RenderBlocks blocks={layout} />
+      <RenderBlocks blocks={blocks} />
     </main>
   )
 }
