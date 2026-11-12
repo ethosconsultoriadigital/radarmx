@@ -67,12 +67,10 @@ export default async function Page({ params: paramsPromise }: Args) {
   }
 
   const { layout } = page
-  // El bloque «Destacado + Lista» de la portada titulaba «Recientes» y
-  // mostraba fotos viejas de GCS. La lista vigente es HomeHighlights.
+  // Solo la portada: el categoryBlock de la categoría «Recientes» muestra
+  // notas viejas con fotos en GCS. El bloque featureWithSidebar se conserva.
   const blocks =
-    slug === 'home'
-      ? (layout || []).filter((block) => block.blockType !== 'featureWithSidebar')
-      : layout
+    slug === 'home' ? (layout || []).filter((block) => !isHomeRecientesCategory(block)) : layout
 
   return (
     <main className="pb-20 pt-8 md:pb-24 md:pt-12">
@@ -117,6 +115,19 @@ export async function generateMetadata({ params: paramsPromise }: Args): Promise
   }
 
   return generateMeta({ doc: page })
+}
+
+function isHomeRecientesCategory(block: {
+  blockType: string
+  category?: number | { id?: number | null; slug?: string | null } | null
+}): boolean {
+  if (block.blockType !== 'categoryBlock') return false
+  const category = block.category
+  if (typeof category === 'number') return category === 1
+  if (category && typeof category === 'object') {
+    return category.id === 1 || category.slug === 'recientes'
+  }
+  return false
 }
 
 const queryPageBySlug = cache(async ({ slug }: { slug: string }) => {
