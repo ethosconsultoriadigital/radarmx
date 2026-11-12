@@ -13,6 +13,7 @@ import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import { absoluteURL, getServerSideURL } from '@/utilities/getURL'
 import { SITE_DESCRIPTION, SITE_LOCALE, SITE_NAME, SITE_TITLE_DEFAULT } from '@/utilities/site'
 
+import HomeHighlights from '@/HomeHighlights/Component'
 import './globals.css'
 
 const frank = Frank_Ruhl_Libre({
@@ -53,6 +54,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         />
         <Providers>
           <Header />
+          <HomeHighlights />
           {children}
           <Footer />
         </Providers>
