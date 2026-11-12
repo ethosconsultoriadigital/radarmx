@@ -27,7 +27,9 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
         FROM "pages_blocks_feature_with_sidebar" f
         WHERE f."_parent_id" = p."id"
       );
+  `)
 
+  await db.execute(sql`
     INSERT INTO "_pages_v_blocks_feature_with_sidebar" ("_order", "_parent_id", "_path", "_uuid")
     SELECT
       COALESCE((
@@ -47,13 +49,17 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
         FROM "_pages_v_blocks_feature_with_sidebar" f
         WHERE f."_parent_id" = v."id"
       );
+  `)
 
+  await db.execute(sql`
     DELETE FROM "pages_blocks_category_block"
     WHERE "category_id" = 1
       AND "_parent_id" IN (
         SELECT "id" FROM "pages" WHERE "slug" = 'home'
       );
+  `)
 
+  await db.execute(sql`
     DELETE FROM "_pages_v_blocks_category_block"
     WHERE "category_id" = 1
       AND "_parent_id" IN (
